@@ -6,8 +6,8 @@ from rest_framework.viewsets import (
     GenericViewSet,
 )
 
-from reviews.models import Category
-from .serializers import CategorySerializer
+from reviews.models import Category, Genre
+from .serializers import CategorySerializer, GenreSerializer
 
 
 class CreateListDestroyViewSet(CreateModelMixin,
@@ -22,4 +22,11 @@ class CategoryViewSet(CreateListDestroyViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     pagination_class = PageNumberPagination
+    lookup_field = 'slug'
+
+
+class GenreViewSet(CreateListDestroyViewSet):
+    """Вьюсет для получения списка, создания и удаления жанров."""
+    queryset = Genre.objects.all()
+    serializer_class = GenreSerializer
     lookup_field = 'slug'
