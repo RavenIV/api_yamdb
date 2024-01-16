@@ -38,7 +38,6 @@ class Title(models.Model):
     year = models.IntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(date.today().year)]
     )
-    rating = models.IntegerField(default=0)
     description = models.TextField(blank=True)
     category = models.ForeignKey(
         Category,
