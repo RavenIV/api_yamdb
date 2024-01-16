@@ -3,11 +3,11 @@ from rest_framework.mixins import (
 )
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.viewsets import (
-    GenericViewSet,
+    GenericViewSet, ModelViewSet
 )
 
-from reviews.models import Category, Genre
-from .serializers import CategorySerializer, GenreSerializer
+from reviews.models import Category, Genre, Title
+from .serializers import CategorySerializer, GenreSerializer, TitleSerializer
 
 
 class CreateListDestroyViewSet(CreateModelMixin,
@@ -30,3 +30,9 @@ class GenreViewSet(CreateListDestroyViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     lookup_field = 'slug'
+
+
+class TitleViewSet(ModelViewSet):
+    """Вьюсет для произведений."""
+    queryset = Title.objects.all()
+    serializer_class = TitleSerializer

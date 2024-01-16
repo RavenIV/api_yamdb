@@ -1,4 +1,5 @@
 from datetime import date
+
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.contrib.auth import get_user_model
@@ -35,25 +36,22 @@ class Genre(models.Model):
 class Title(models.Model):
     name = models.CharField(max_length=256)
     year = models.IntegerField(
-        validators=[MinValueValidator(1),
-                    # сейчас установлено ограничение, что это поле строго
-                    # больше нуля, но можно поставить любое другое ограничение
-                    # и вынести его в константы
-                    MaxValueValidator(date.today().year)])
-# FIX ME: реализовать lambda: date.today().year,
-    # или вынести в отдельную функцию
-    description = models.TextField()
-    category = models.ForeignKey(Category, on_delete=models.SET_NULL,
-                                 related_name='title',
-                                 blank=False, null=True)
-    # blank=False - для того чтобы при создании нового произведения нельзя
-    # было оставить его без категории, а null=True чтобы не возникало
-    # ошибок при удалении категории
-    genres = models.ManyToManyField(Genre, related_name='title')
+        validators=[MinValueValidator(1), MaxValueValidator(date.today().year)]
+    )
+    rating = models.IntegerField(default=0)
+    description = models.TextField(blank=True)
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.SET_NULL,
+        blank=False,
+        null=True
+    )
+    genre = models.ManyToManyField(Genre)
 
     class Meta:
         verbose_name = 'Произведение'
         verbose_name_plural = 'Произведения'
+        default_related_name = 'titles'
 
     def __str__(self):
         return self.name
