@@ -44,6 +44,7 @@ class TitleViewSet(ModelViewSet):
 
 class ReviewViewSet(ModelViewSet):
     serializer_class = ReviewSerializer
+    pagination_class = PageNumberPagination
 
     def get_title(self):
         title_id = self.kwargs.get('title_id')
@@ -52,21 +53,13 @@ class ReviewViewSet(ModelViewSet):
     def get_queryset(self):
         return self.get_title().review.all()
 
-    def create(self, request, *args, **kwargs):
-        title_id = kwargs.get('title_id')
-        title = Title.objects.get(id=title_id)
-        if Review.objects.filter(title=title, author=request.user).exists():
-            return Response({'detail': 'Вы уже оставили отзыв на '
-                                       'это произведение.'},
-                            status=status.HTTP_400_BAD_REQUEST)
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save(author=request.user, title=title)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user, title=self.get_title())
 
 
 class CommentViewSet(ModelViewSet):
     serializer_class = CommentSerializer
+    pagination_class = PageNumberPagination
 
     def get_review(self):
         title_id = self.kwargs.get('title_id')
@@ -77,16 +70,5 @@ class CommentViewSet(ModelViewSet):
     def get_queryset(self):
         return self.get_review().comment.all()
 
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save(author=request.user, review=self.get_review())
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    def partial_update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data,
-                                         partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user, review=self.get_review())

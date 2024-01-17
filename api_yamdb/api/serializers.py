@@ -1,4 +1,6 @@
 from rest_framework import serializers
+from rest_framework.validators import UniqueTogetherValidator
+
 
 from reviews.models import Category, Genre, Title, Review, Comment
 
@@ -48,11 +50,22 @@ class ReviewSerializer(serializers.ModelSerializer):
         read_only=True,
         default=serializers.CurrentUserDefault()
     )
+    score = serializers.IntegerField(
+        validators=[serializers.validators.MinValueValidator(1),
+                    serializers.validators.MaxValueValidator(10)]
+    )
 
     class Meta:
         model = Review
         fields = ('id', 'text', 'author', 'score', 'pub_date')
         read_only_fields = ('id', 'pub_date')
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Review.objects.all(),
+                fields=('author', 'title'),
+                message='Вы уже оставили отзыв на это произведение.'
+            )
+        ]
 
 
 class CommentSerializer(serializers.ModelSerializer):
