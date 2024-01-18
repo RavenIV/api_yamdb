@@ -106,18 +106,19 @@ class CustomTokenObtainSerializer(TokenObtainSerializer):
         return RefreshToken.for_user(user)
 
     def validate(self, attrs):
-        user = User.objects.filter(
-            username=attrs[self.username_field]).first()
+        username = attrs[self.username_field]
+        user = User.objects.filter(username=username).first()
 
         if not user:
             raise NotFound(
-                {'username': 'Пользователь с таким username не существует'},
+                {'username': f'Пользователь с username'
+                 f'{username} не существует'},
                 code='user_not_found',
             )
 
         if not user.is_active:
             raise ValidationError(
-                {'is_active': 'Данный аккаунт неактивен'},
+                {'is_active': f'Аккаунт {username} неактивен'},
                 code='inactive_account',
             )
 
