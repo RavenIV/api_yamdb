@@ -50,10 +50,7 @@ class ReviewSerializer(serializers.ModelSerializer):
         read_only=True,
         default=serializers.CurrentUserDefault()
     )
-    score = serializers.IntegerField(
-        validators=[serializers.validators.MinValueValidator(1),
-                    serializers.validators.MaxValueValidator(10)]
-    )
+    score = serializers.IntegerField()
 
     class Meta:
         model = Review
@@ -66,6 +63,12 @@ class ReviewSerializer(serializers.ModelSerializer):
                 message='Вы уже оставили отзыв на это произведение.'
             )
         ]
+
+    def validate_score(self, value):
+        if value <= 1 or value >= 10:
+            raise serializers.ValidationError('Оценка должна быть в диапазоне '
+                                              'от 1 до 10.')
+        return value
 
 
 class CommentSerializer(serializers.ModelSerializer):
