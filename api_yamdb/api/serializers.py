@@ -1,6 +1,13 @@
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
-
+from django.core.validators import MinValueValidator, MaxValueValidator
+from django.contrib.auth import get_user_model
+from django.core.mail import send_mail
+from django.core.validators import RegexValidator
+from django.utils import timezone
+from rest_framework.exceptions import NotFound, ValidationError
+from rest_framework_simplejwt.serializers import TokenObtainSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from reviews.models import Category, Genre, Title, Review, Comment
 
@@ -51,8 +58,8 @@ class ReviewSerializer(serializers.ModelSerializer):
         default=serializers.CurrentUserDefault()
     )
     score = serializers.IntegerField(
-        validators=[serializers.validators.MinValueValidator(1),
-                    serializers.validators.MaxValueValidator(10)]
+        validators=[MinValueValidator(1),
+                    MaxValueValidator(10)]
     )
 
     class Meta:
@@ -79,3 +86,124 @@ class CommentSerializer(serializers.ModelSerializer):
         model = Comment
         fields = ('id', 'text', 'author', 'pub_date')
         read_only_fields = ('id', 'pub_date')
+
+
+User = get_user_model()
+
+
+class CustomTokenObtainSerializer(TokenObtainSerializer):
+    """Получение токена по username и confirmation_code."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields[self.username_field] = serializers.CharField()
+        self.fields['confirmation_code'] = serializers.CharField()
+        self.fields.pop('password', None)
+
+    @classmethod
+    def get_token(cls, user):
+        return RefreshToken.for_user(user)
+
+    def validate(self, attrs):
+        user = User.objects.filter(
+            username=attrs[self.username_field],
+        ).first()
+
+        if not user:
+            raise NotFound(
+                {'username': 'Пользователь с таким username не существует'},
+                code='user_not_found',
+            )
+
+        if not user.is_active:
+            raise ValidationError(
+                {'is_active': 'Данный аккаунт неактивен'},
+                code='inactive_account',
+            )
+
+        # if user.confirmation_code != attrs['confirmation_code']:
+        #     raise ValidationError(
+        #         {'confirmation_code': 'Неверный код подтверждения'},
+        #         code='invalid_confirmation_code',
+        #     )
+
+        self.user = user
+
+        user.last_login = timezone.now()
+        user.save()
+        return {'token': str(self.get_token(self.user).access_token)}
+
+
+class RegisterSerializer(serializers.ModelSerializer):
+    """
+    Регистрация по username и email с
+    получением confirmation_code на почту.
+    """
+
+    email = serializers.EmailField(
+        max_length=254,
+        required=True,
+    )
+
+    username = serializers.CharField(
+        max_length=150,
+        required=True,
+        validators=[
+            RegexValidator(
+                regex=r"^[\w.@+-]+$",
+                message='Имя пользователя может содержать '
+                'только буквы, цифры и следующие символы: '
+                '@/./+/-/_',
+            )
+        ],
+    )
+
+    class Meta:
+        model = User
+        fields = ('username', 'email')
+
+    def create(self, validated_data):
+        username = validated_data['username']
+        email = validated_data['email']
+
+        user_email_username = User.objects.filter(
+            username=username, email=email).first()
+
+        if user_email_username:
+            return user_email_username
+
+        user_username = User.objects.filter(username=username).first()
+        user_email = User.objects.filter(email=email).first()
+
+        if user_username:
+            if user_username and user_email:
+                raise serializers.ValidationError(
+                    {'username': ['Данный username уже занят'],
+                     'email': ['Данный email уже занят']},
+                    code='duplicate_email')
+            raise serializers.ValidationError(
+                {'username': ['Данный username уже занят']},
+                code='duplicate_username')
+
+        if user_email:
+            raise serializers.ValidationError(
+                {'email': ['Данный email уже занят']},
+                code='duplicate_email')
+
+        user_new = User.objects.create(username=username, email=email)
+        send_mail(
+            subject='YAmdb confirmation code',
+            message=user_new.confirmation_code,
+            from_email='yamdb@ya.ru',
+            recipient_list=[validated_data['email']]
+        )
+        return user_new
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        if 'username' in data:
+            if data['username'].lower() == 'me':
+                raise serializers.ValidationError(
+                    'Нельзя использовать me/Me/mE/ME как username')
+        return data
