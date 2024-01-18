@@ -107,8 +107,7 @@ class CustomTokenObtainSerializer(TokenObtainSerializer):
 
     def validate(self, attrs):
         user = User.objects.filter(
-            username=attrs[self.username_field],
-        ).first()
+            username=attrs[self.username_field]).first()
 
         if not user:
             raise NotFound(
@@ -122,9 +121,11 @@ class CustomTokenObtainSerializer(TokenObtainSerializer):
                 code='inactive_account',
             )
 
-        # if user.confirmation_code != attrs['confirmation_code']:
+        # if str(user.confirmation_code) != attrs['confirmation_code']:
         #     raise ValidationError(
-        #         {'confirmation_code': 'Неверный код подтверждения'},
+        #         {'confirmation_code': f'Неверный код подтверждения '
+        #                               f'{user.confirmation_code} != '
+        #                               f'{attrs["confirmation_code"]}'},
         #         code='invalid_confirmation_code',
         #     )
 
@@ -194,9 +195,9 @@ class RegisterSerializer(serializers.ModelSerializer):
         user_new = User.objects.create(username=username, email=email)
         send_mail(
             subject='YAmdb confirmation code',
-            message=user_new.confirmation_code,
+            message=str(user_new.confirmation_code),
             from_email='yamdb@ya.ru',
-            recipient_list=[validated_data['email']]
+            recipient_list=[email]
         )
         return user_new
 
