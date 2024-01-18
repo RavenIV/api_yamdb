@@ -104,6 +104,4 @@ STATIC_URL = '/static/'
 
 STATICFILES_DIRS = ((BASE_DIR / 'static/'),)
 
-# User model
-
 AUTH_USER_MODEL = 'reviews.CustomUser'
