@@ -1,11 +1,10 @@
-from rest_framework import serializers
-from rest_framework.validators import UniqueTogetherValidator
-from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.core.validators import RegexValidator
 from django.utils import timezone
+from rest_framework import serializers
 from rest_framework.exceptions import NotFound, ValidationError
+from rest_framework.validators import UniqueTogetherValidator
 from rest_framework_simplejwt.serializers import TokenObtainSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -57,10 +56,6 @@ class ReviewSerializer(serializers.ModelSerializer):
         read_only=True,
         default=serializers.CurrentUserDefault()
     )
-    score = serializers.IntegerField(
-        validators=[MinValueValidator(1),
-                    MaxValueValidator(10)]
-    )
 
     class Meta:
         model = Review
@@ -73,6 +68,12 @@ class ReviewSerializer(serializers.ModelSerializer):
                 message='Вы уже оставили отзыв на это произведение.'
             )
         ]
+
+    def validate_score(self, value):
+        if value < 1 or value > 10:
+            raise serializers.ValidationError('Оценка должна быть в диапазоне '
+                                              'от 1 до 10.')
+        return value
 
 
 class CommentSerializer(serializers.ModelSerializer):
