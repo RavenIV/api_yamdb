@@ -1,10 +1,55 @@
 from datetime import date
+import uuid
 
-from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.contrib.auth import get_user_model
-from django.core.validators import (MinValueValidator, MaxValueValidator,
-                                    RegexValidator, EmailValidator)
+from django.contrib.auth.models import AbstractUser
+from django.core.validators import (
+    MinValueValidator, MaxValueValidator, EmailValidator
+)
+
+
+class CustomUser(AbstractUser):
+    ROLE_CHOICES = [
+        ('user', 'user'),
+        ('moderator', 'moderator'),
+        ('admin', 'admin'),
+    ]
+    email = models.EmailField(
+        'Адресс электронной почты',
+        unique=True,
+        validators=[EmailValidator(
+            message='Введите корректный адрес электронной почты.')
+        ],
+        error_messages={
+            'unique': 'Пользователь с таким адресом'
+                      'электронной почты уже существует.',
+        },
+    )
+    bio = models.TextField('О себе', blank=True)
+    role = models.CharField(
+        'Тип пользователя', max_length=16,
+        choices=ROLE_CHOICES, default='user'
+    )
+    confirmation_code = models.UUIDField(
+        primary_key=False, default=uuid.uuid4, editable=False)
+
+    class Meta:
+        verbose_name = 'Пользователь'
+        verbose_name_plural = 'Пользователи'
+
+    def __str__(self):
+        return (
+            f'{self.username=:.20}, '
+            f'{self.email=}, '
+            f'{self.role=}, '
+            f'{self.first_name=:.20}, '
+            f'{self.last_name=:.20}, '
+            f'{self.is_staff=}, '
+            f'{self.is_active=}, '
+            f'{self.bio=:.20}'
+        )
+
 
 User = get_user_model()
 
@@ -18,7 +63,10 @@ class Category(models.Model):
         verbose_name_plural = 'Категории'
 
     def __str__(self):
-        return self.name
+        return (
+            f'{self.name=:20}, '
+            f'{self.slug=}'
+        )
 
 
 class Genre(models.Model):
@@ -30,7 +78,10 @@ class Genre(models.Model):
         verbose_name_plural = 'Жанры'
 
     def __str__(self):
-        return self.name
+        return (
+            f'{self.name=:20}, '
+            f'{self.slug=}'
+        )
 
 
 class Title(models.Model):
@@ -45,7 +96,7 @@ class Title(models.Model):
         blank=False,
         null=True
     )
-    genre = models.ManyToManyField(Genre)
+    genre = models.ManyToManyField(Genre, through='GenreTitle')
 
     class Meta:
         verbose_name = 'Произведение'
@@ -53,17 +104,19 @@ class Title(models.Model):
         default_related_name = 'titles'
 
     def __str__(self):
-        return self.name
+        return (
+            f'{self.name=:.20}, '
+            f'{self.year=}, '
+            f'{self.description=:.20}, '
+            f'{self.category=}, '
+            f'{self.genre=}'
+        )
 
 
 class Review(models.Model):
     text = models.TextField()
-    title = models.ForeignKey(
-        Title, on_delete=models.CASCADE, related_name='review'
-    )
-    author = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='review'
-    )
+    title = models.ForeignKey(Title, on_delete=models.CASCADE)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
     score = models.IntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(10)]
     )
@@ -72,58 +125,38 @@ class Review(models.Model):
     class Meta:
         verbose_name = 'Отзыв'
         verbose_name_plural = 'Отзывы'
+        default_related_name = 'review'
+
+    def __str__(self):
+        return (
+            f'{self.text=:.20}, '
+            f'{self.title=}, '
+            f'{self.author=}, '
+            f'{self.score=}, '
+            f'{self.pub_date=}'
+        )
 
 
 class Comment(models.Model):
     text = models.TextField()
-    review = models.ForeignKey(
-        Review, on_delete=models.CASCADE, related_name='comment'
-    )
-    author = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='comment'
-    )
+    review = models.ForeignKey(Review, on_delete=models.CASCADE)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
     pub_date = models.DateTimeField(auto_now_add=True, db_index=True)
 
     class Meta:
         verbose_name = 'Комментарий'
         verbose_name_plural = 'Комментарии'
+        default_related_name = 'comment'
+
+    def __str__(self):
+        return (
+            f'{self.text=:.20}, '
+            f'{self.review=:.20}, '
+            f'{self.author=}, '
+            f'{self.pub_date=}'
+        )
 
 
-# class CustomUser(AbstractUser):
-#     ROLE_CHOICES = [
-#         ('user', 'user'),
-#         ('moderator', 'moderator'),
-#         ('admin', 'admin'),
-#     ]
-#
-#     username_validator = RegexValidator(
-#         r'^[\w.@+-]+\Z',
-#         'Введите корректное имя пользователя. '
-#         'Это значение может содержать только буквы,'
-#         'цифры и символы @/./+/-/_ .'
-#     )
-#
-#     username = models.CharField(
-#         max_length=150,
-#         unique=True,
-#         validators=[username_validator],
-#         error_messages={'unique': 'Пользователь с таким именем'
-#                                   'уже существует.', },
-#     )
-#     email = models.EmailField(
-#         unique=True,
-#         validators=[EmailValidator(message='Введите корректный адрес'
-#                                            'электронной почты.')],
-#         error_messages={
-#             'unique': 'Пользователь с таким адресом'
-#                       'электронной почты уже существует.',
-#         },
-#     )
-#     first_name = models.CharField(max_length=150)
-#     last_name = models.CharField(max_length=150)
-#     bio = models.TextField(blank=True)
-#     role = models.CharField(choices=ROLE_CHOICES, default='user')
-#
-#     class Meta:
-#         verbose_name = 'Пользователь'
-#         verbose_name_plural = 'Пользователи'
+class GenreTitle(models.Model):
+    genre = models.ForeignKey(Genre, on_delete=models.SET_NULL, null=True)
+    title = models.ForeignKey(Title, on_delete=models.CASCADE)
