@@ -71,6 +71,7 @@ class TitleSerializer(serializers.ModelSerializer):
         return year
 
 
+
 class ReviewSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
         slug_field='username',
