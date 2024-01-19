@@ -1,3 +1,4 @@
+from django.db.models import Avg, IntegerField
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.core.validators import RegexValidator
@@ -41,13 +42,18 @@ class TitleSerializer(serializers.ModelSerializer):
     category = CustomSlugRelatedField(
         queryset=Category.objects.all(), slug_field='slug'
     )
+    rating = serializers.SerializerMethodField()
 
     class Meta:
         model = Title
         fields = (
-            'id', 'name', 'year', 'description', 'genre', 'category'
+            'id', 'name', 'year', 'rating', 'description', 'genre', 'category'
         )
         read_only_fields = ('id',)
+
+    def get_rating(self, obj):
+        return Review.objects.filter(title=obj).aggregate(
+            Avg('score'), output_field=IntegerField())['score__avg']
 
 
 class ReviewSerializer(serializers.ModelSerializer):
