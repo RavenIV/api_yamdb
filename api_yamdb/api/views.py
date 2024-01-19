@@ -43,6 +43,7 @@ class TitleViewSet(ModelViewSet):
     serializer_class = TitleSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ('category', 'genre', 'name', 'year')
+    http_method_names = ['get', 'post', 'patch', 'delete']
 
 
 class ReviewViewSet(ModelViewSet):
