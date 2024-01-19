@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters
+from rest_framework import filters, permissions
 from rest_framework import status
 from rest_framework.mixins import (
     CreateModelMixin, ListModelMixin, DestroyModelMixin
@@ -9,13 +9,16 @@ from rest_framework.mixins import (
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
+from rest_framework.decorators import action
 
 from reviews.models import Category, Genre, Title, Review
 from .filters import TitleFilter
-from .permissions import IsAdminOrReadOnly
 from .serializers import (CategorySerializer, GenreSerializer, TitleSerializer,
                           ReviewSerializer, CommentSerializer,
+                          UserSerializer, UserMeSerializer,
                           CustomTokenObtainSerializer, RegisterSerializer)
+from .permissions import (IsAuthorNotUserOrReadOnlyPermission,
+                          IsAdminOrReadOnly, IsAdminOrSuperuser)
 
 
 class CreateListDestroyViewSet(CreateModelMixin,
@@ -88,17 +91,40 @@ class CommentViewSet(ModelViewSet):
 User = get_user_model()
 
 
-class TokenObtainView(TokenObtainPairView):
-    serializer_class = CustomTokenObtainSerializer
+class UserViewSet(ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    lookup_field = 'username'
+    http_method_names = ['get', 'post', 'patch', 'delete']
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('username',)
+    permission_classes = (permissions.IsAuthenticated, IsAdminOrSuperuser,)
+
+    @action(
+        detail=False,
+        methods=['get', 'patch'],
+        permission_classes=(permissions.IsAuthenticated,),
+        serializer_class=UserMeSerializer
+    )
+    def me(self, request, pk=None):
+        if request.method == 'PATCH':
+            serializer = self.get_serializer(
+                request.user, data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+        return Response(self.get_serializer(request.user).data)
 
 
 class RegisterModelViewSet(ModelViewSet):
-    serializer_class = RegisterSerializer
     queryset = User.objects.all()
+    serializer_class = RegisterSerializer
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class TokenObtainView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainSerializer

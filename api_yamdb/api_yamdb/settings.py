@@ -1,4 +1,5 @@
 from pathlib import Path
+from datetime import timedelta
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -99,6 +100,11 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
 }
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=999),
+    'AUTH_HEADER_TYPES': ('Bearer',),
+} 
 
 # Эмуляция почтовых сообщений через текстовые файлы
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
