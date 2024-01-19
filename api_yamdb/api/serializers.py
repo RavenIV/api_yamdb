@@ -1,4 +1,4 @@
-from django.db.models import Avg, IntegerField
+from django.db.models import Avg
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.core.validators import RegexValidator
@@ -53,7 +53,7 @@ class TitleSerializer(serializers.ModelSerializer):
 
     def get_rating(self, obj):
         return Review.objects.filter(title=obj).aggregate(
-            Avg('score'), output_field=IntegerField())['score__avg']
+            Avg('score'))['score__avg']
 
 
 class ReviewSerializer(serializers.ModelSerializer):
