@@ -1,4 +1,5 @@
 from datetime import date
+import uuid
 
 from django.db import models
 from django.contrib.auth import get_user_model
@@ -30,6 +31,8 @@ class CustomUser(AbstractUser):
         'Тип пользователя', max_length=16,
         choices=ROLE_CHOICES, default='user'
     )
+    confirmation_code = models.UUIDField(
+        primary_key=False, default=uuid.uuid4, editable=False)
 
     class Meta:
         verbose_name = 'Пользователь'

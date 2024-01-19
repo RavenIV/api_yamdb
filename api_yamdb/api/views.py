@@ -2,13 +2,17 @@ from rest_framework.mixins import (
     CreateModelMixin, ListModelMixin, DestroyModelMixin
 )
 from django.shortcuts import get_object_or_404
-from rest_framework.viewsets import (
-    GenericViewSet, ModelViewSet
-)
+from django.contrib.auth import get_user_model
+from rest_framework import status
+from rest_framework.response import Response
 
-from reviews.models import Category, Genre, Title, Review, Comment
+from rest_framework.viewsets import GenericViewSet, ModelViewSet
+from rest_framework_simplejwt.views import TokenObtainPairView
+
+from reviews.models import Category, Genre, Title, Review
 from .serializers import (CategorySerializer, GenreSerializer, TitleSerializer,
-                          ReviewSerializer, CommentSerializer)
+                          ReviewSerializer, CommentSerializer,
+                          CustomTokenObtainSerializer, RegisterSerializer)
 
 
 class CreateListDestroyViewSet(CreateModelMixin,
@@ -66,3 +70,22 @@ class CommentViewSet(ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user, review=self.get_review())
+
+
+User = get_user_model()
+
+
+class TokenObtainView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainSerializer
+
+
+class RegisterModelViewSet(ModelViewSet):
+    serializer_class = RegisterSerializer
+    queryset = User.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
