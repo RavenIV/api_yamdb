@@ -2,9 +2,6 @@ from rest_framework.mixins import (
     CreateModelMixin, ListModelMixin, DestroyModelMixin
 )
 from django.shortcuts import get_object_or_404
-from rest_framework import status
-from rest_framework.response import Response
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.viewsets import (
     GenericViewSet, ModelViewSet
 )
@@ -25,7 +22,6 @@ class CategoryViewSet(CreateListDestroyViewSet):
     """Вьюсет для получения списка, создания и удаления категорий."""
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    pagination_class = PageNumberPagination
     lookup_field = 'slug'
 
 
@@ -44,7 +40,6 @@ class TitleViewSet(ModelViewSet):
 
 class ReviewViewSet(ModelViewSet):
     serializer_class = ReviewSerializer
-    pagination_class = PageNumberPagination
 
     def get_title(self):
         title_id = self.kwargs.get('title_id')
@@ -59,7 +54,6 @@ class ReviewViewSet(ModelViewSet):
 
 class CommentViewSet(ModelViewSet):
     serializer_class = CommentSerializer
-    pagination_class = PageNumberPagination
 
     def get_review(self):
         title_id = self.kwargs.get('title_id')
