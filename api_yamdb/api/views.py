@@ -1,9 +1,10 @@
+from django.shortcuts import get_object_or_404
+from django.contrib.auth import get_user_model
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import status
 from rest_framework.mixins import (
     CreateModelMixin, ListModelMixin, DestroyModelMixin
 )
-from django.shortcuts import get_object_or_404
-from django.contrib.auth import get_user_model
-from rest_framework import status
 from rest_framework.response import Response
 
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
@@ -40,6 +41,8 @@ class TitleViewSet(ModelViewSet):
     """Вьюсет для произведений."""
     queryset = Title.objects.all()
     serializer_class = TitleSerializer
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ('category', 'genre', 'name', 'year')
 
 
 class ReviewViewSet(ModelViewSet):
