@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
-
-from rest_framework import filters, filters, permissions
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, permissions
 from rest_framework import status
 from rest_framework.mixins import (
     CreateModelMixin, ListModelMixin, DestroyModelMixin
@@ -12,7 +12,7 @@ from rest_framework.viewsets import GenericViewSet, ModelViewSet
 from rest_framework.decorators import action
 
 from reviews.models import Category, Genre, Title, Review
-
+from .filters import TitleFilter
 from .serializers import (CategorySerializer, GenreSerializer, TitleSerializer,
                           ReviewSerializer, CommentSerializer,
                           UserSerializer, UserMeSerializer,
@@ -33,6 +33,9 @@ class CategoryViewSet(CreateListDestroyViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     lookup_field = 'slug'
+    permission_classes = (IsAdminOrReadOnly,)
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('name',)
 
 
 class GenreViewSet(CreateListDestroyViewSet):
@@ -40,12 +43,19 @@ class GenreViewSet(CreateListDestroyViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     lookup_field = 'slug'
+    permission_classes = (IsAdminOrReadOnly,)
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('name',)
 
 
 class TitleViewSet(ModelViewSet):
     """Вьюсет для произведений."""
     queryset = Title.objects.all()
     serializer_class = TitleSerializer
+    filter_backends = (DjangoFilterBackend,)
+    http_method_names = ['get', 'post', 'patch', 'delete']
+    permission_classes = (IsAdminOrReadOnly,)
+    filterset_class = TitleFilter
 
 
 class ReviewViewSet(ModelViewSet):

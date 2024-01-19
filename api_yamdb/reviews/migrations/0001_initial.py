@@ -57,6 +57,7 @@ class Migration(migrations.Migration):
             options={
                 'verbose_name': 'Категория',
                 'verbose_name_plural': 'Категории',
+                'ordering': ('name',),
             },
         ),
         migrations.CreateModel(
@@ -69,6 +70,7 @@ class Migration(migrations.Migration):
             options={
                 'verbose_name': 'Жанр',
                 'verbose_name_plural': 'Жанры',
+                'ordering': ('name',),
             },
         ),
         migrations.CreateModel(
@@ -91,6 +93,7 @@ class Migration(migrations.Migration):
             options={
                 'verbose_name': 'Произведение',
                 'verbose_name_plural': 'Произведения',
+                'ordering': ('year',),
                 'default_related_name': 'titles',
             },
         ),
