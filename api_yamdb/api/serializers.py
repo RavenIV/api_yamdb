@@ -52,12 +52,6 @@ class TitleSerializer(serializers.ModelSerializer):
             'id', 'name', 'year', 'rating', 'description', 'genre', 'category'
         )
         read_only_fields = ('id',)
-        validators = [
-            UniqueTogetherValidator(
-                queryset=Review.objects.all(),
-                fields=('name', 'category')
-            )
-        ]
 
     def get_rating(self, obj):
         return Review.objects.filter(title=obj).aggregate(
@@ -69,7 +63,6 @@ class TitleSerializer(serializers.ModelSerializer):
                 'Год выпуска не может быть больше текущего.'
             )
         return year
-
 
 
 class ReviewSerializer(serializers.ModelSerializer):
