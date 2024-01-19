@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.db.models import Avg
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
@@ -50,10 +52,24 @@ class TitleSerializer(serializers.ModelSerializer):
             'id', 'name', 'year', 'rating', 'description', 'genre', 'category'
         )
         read_only_fields = ('id',)
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Review.objects.all(),
+                fields=('name', 'category')
+            )
+        ]
 
     def get_rating(self, obj):
         return Review.objects.filter(title=obj).aggregate(
             Avg('score'))['score__avg']
+
+    def validate_year(self, year):
+        if year > date.today().year:
+            raise serializers.ValidationError(
+                'Год выпуска не может быть больше текущего.'
+            )
+        return year
+
 
 
 class ReviewSerializer(serializers.ModelSerializer):
