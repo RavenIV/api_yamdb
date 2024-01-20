@@ -81,13 +81,13 @@ class ReviewViewSet(ModelViewSet):
 
     def get_permissions(self):
         if self.request.method in ['GET']:
-            self.permission_classes = [IsAuthorNotUserOrReadOnlyPermission,]
+            self.permission_classes = [IsAuthorNotUserOrReadOnlyPermission, ]
         elif self.request.method in ['POST']:
-            self.permission_classes = [IsAuthorNotUserOrReadOnlyPermission,]
+            self.permission_classes = [IsAuthorNotUserOrReadOnlyPermission, ]
         elif self.request.method in ['PATCH', 'DELETE']:
             if (self.request.user.is_authenticated
                     and self.request.user.role == 'admin'):
-                self.permission_classes = [IsAdmin,]
+                self.permission_classes = [IsAdmin, ]
             else:
                 self.permission_classes = [
                     IsAuthorNotUserOrReadOnlyPermission,
@@ -113,13 +113,13 @@ class CommentViewSet(ModelViewSet):
 
     def get_permissions(self):
         if self.request.method in ['GET']:
-            self.permission_classes = [IsAuthorNotUserOrReadOnlyPermission,]
+            self.permission_classes = [IsAuthorNotUserOrReadOnlyPermission, ]
         elif self.request.method in ['POST']:
-            self.permission_classes = [IsAuthorNotUserOrReadOnlyPermission,]
+            self.permission_classes = [IsAuthorNotUserOrReadOnlyPermission, ]
         elif self.request.method in ['PATCH', 'DELETE']:
             if (self.request.user.is_authenticated
                     and self.request.user.role == 'admin'):
-                self.permission_classes = [IsAdmin,]
+                self.permission_classes = [IsAdmin, ]
             else:
                 self.permission_classes = [
                     IsAuthorNotUserOrReadOnlyPermission,

@@ -42,7 +42,7 @@ def populate_model(reader, model, fields):
 
 
 class Command(BaseCommand):
-    help = 'Имортировать данные файлов .csv из папки ./static/data/ в базу данных.'
+    help = 'Имортировать файлы .csv из папки ./static/data/ в базу данных.'
 
     def handle(self, *args, **options):
         for file_name, model, fields in FILE_MODEL_FIELDS:
