@@ -89,8 +89,9 @@ class ReviewViewSet(ModelViewSet):
                     and self.request.user.role == 'admin'):
                 self.permission_classes = [IsAdmin,]
             else:
-                self.permission_classes =\
-                    [IsAuthorNotUserOrReadOnlyPermission,]
+                self.permission_classes = [
+                    IsAuthorNotUserOrReadOnlyPermission,
+                ]
         return super().get_permissions()
 
 
@@ -120,8 +121,9 @@ class CommentViewSet(ModelViewSet):
                     and self.request.user.role == 'admin'):
                 self.permission_classes = [IsAdmin,]
             else:
-                self.permission_classes =\
-                    [IsAuthorNotUserOrReadOnlyPermission,]
+                self.permission_classes = [
+                    IsAuthorNotUserOrReadOnlyPermission,
+                ]
         return super().get_permissions()
 
 

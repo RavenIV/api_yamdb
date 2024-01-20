@@ -2,11 +2,11 @@ from datetime import date
 import uuid
 
 from django.db import models
-from django.contrib.auth import get_user_model
-from django.contrib.auth.models import AbstractUser
 from django.core.validators import (
     MinValueValidator, MaxValueValidator, EmailValidator
 )
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AbstractUser
 
 
 class CustomUser(AbstractUser):
@@ -93,7 +93,9 @@ class Title(models.Model):
         validators=[MinValueValidator(1), MaxValueValidator(date.today().year)]
     )
     description = models.TextField(blank=True)
-    category = models.ForeignKey(Category, on_delete=models.SET_NULL, blank=False, null=True)
+    category = models.ForeignKey(
+        Category, on_delete=models.SET_NULL, blank=False, null=True
+    )
     genre = models.ManyToManyField(Genre, through='GenreTitle')
 
     class Meta:
