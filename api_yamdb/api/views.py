@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, status
+from rest_framework import filters, status, permissions
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.mixins import (
@@ -17,6 +17,7 @@ from .permissions import (IsAdminOrReadOnly, IsAdmin, IsAdminOrSuperuser,
                           IsAuthorNotUserOrReadOnlyPermission)
 from .serializers import (CategorySerializer, GenreSerializer, TitleSerializer,
                           ReviewSerializer, CommentSerializer,
+                          UserSerializer, UserMeSerializer,
                           CustomTokenObtainSerializer, RegisterSerializer)
 
 
