@@ -54,8 +54,9 @@ class TitleSerializer(serializers.ModelSerializer):
         read_only_fields = ('id',)
 
     def get_rating(self, obj):
-        return Review.objects.filter(title=obj).aggregate(
+        avg_score = Review.objects.filter(title=obj).aggregate(
             Avg('score'))['score__avg']
+        return round(avg_score) if avg_score is not None else None
 
     def validate_year(self, year):
         if year > date.today().year:
@@ -76,13 +77,6 @@ class ReviewSerializer(serializers.ModelSerializer):
         model = Review
         fields = ('id', 'text', 'author', 'score', 'pub_date')
         read_only_fields = ('id', 'pub_date')
-        validators = [
-            UniqueTogetherValidator(
-                queryset=Review.objects.all(),
-                fields=('author', 'title'),
-                message='Вы уже оставили отзыв на это произведение.'
-            )
-        ]
 
     def validate_score(self, value):
         if value < 1 or value > 10:
@@ -189,7 +183,8 @@ class RegisterSerializer(UserSerializer):
         if user_email:
             raise serializers.ValidationError(
                 {'email': [f'email {user_email} уже занят']},
-                code='duplicate_email')
+                code='duplicate_email'
+            )
 
         user_new = User.objects.create(username=username, email=email)
 
@@ -234,13 +229,13 @@ class CustomTokenObtainSerializer(TokenObtainSerializer):
                 code='inactive_account',
             )
 
-        # if str(user.confirmation_code) != attrs['confirmation_code']:
-        #     raise ValidationError(
-        #         {'confirmation_code': f'Неверный код подтверждения '
-        #                               f'{user.confirmation_code} != '
-        #                               f'{attrs["confirmation_code"]}'},
-        #         code='invalid_confirmation_code',
-        #     )
+        if str(user.confirmation_code) != attrs['confirmation_code']:
+             raise ValidationError(
+                 {'confirmation_code': f'Неверный код подтверждения '
+                                       f'{user.confirmation_code} != '
+                                       f'{attrs["confirmation_code"]}'},
+                 code='invalid_confirmation_code',
+             )
 
         self.user = user
 

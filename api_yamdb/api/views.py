@@ -1,24 +1,23 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, permissions
-from rest_framework import status
+from rest_framework import filters, status
+from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.mixins import (
     CreateModelMixin, ListModelMixin, DestroyModelMixin
 )
 from rest_framework.response import Response
-from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
-from rest_framework.decorators import action
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 from reviews.models import Category, Genre, Title, Review
 from .filters import TitleFilter
+from .permissions import (IsAdminOrReadOnly, IsAdmin, IsAdminOrSuperuser,
+                          IsAuthorNotUserOrReadOnlyPermission)
 from .serializers import (CategorySerializer, GenreSerializer, TitleSerializer,
                           ReviewSerializer, CommentSerializer,
-                          UserSerializer, UserMeSerializer,
                           CustomTokenObtainSerializer, RegisterSerializer)
-from .permissions import (IsAuthorNotUserOrReadOnlyPermission,
-                          IsAdminOrReadOnly, IsAdminOrSuperuser)
 
 
 class CreateListDestroyViewSet(CreateModelMixin,
@@ -60,6 +59,7 @@ class TitleViewSet(ModelViewSet):
 
 class ReviewViewSet(ModelViewSet):
     serializer_class = ReviewSerializer
+    http_method_names = ['get', 'post', 'patch', 'delete']
 
     def get_title(self):
         title_id = self.kwargs.get('title_id')
@@ -69,11 +69,33 @@ class ReviewViewSet(ModelViewSet):
         return self.get_title().review.all()
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user, title=self.get_title())
+        title = self.get_title()
+        author = self.request.user
+
+        if Review.objects.filter(author=author, title=title).exists():
+            raise ValidationError(
+                'Отзыв от данного автора на это произведение уже существует')
+
+        serializer.save(author=author, title=title)
+
+    def get_permissions(self):
+        if self.request.method in ['GET']:
+            self.permission_classes = [IsAuthorNotUserOrReadOnlyPermission,]
+        elif self.request.method in ['POST']:
+            self.permission_classes = [IsAuthorNotUserOrReadOnlyPermission,]
+        elif self.request.method in ['PATCH', 'DELETE']:
+            if (self.request.user.is_authenticated
+                    and self.request.user.role == 'admin'):
+                self.permission_classes = [IsAdmin,]
+            else:
+                self.permission_classes =\
+                    [IsAuthorNotUserOrReadOnlyPermission,]
+        return super().get_permissions()
 
 
 class CommentViewSet(ModelViewSet):
     serializer_class = CommentSerializer
+    http_method_names = ['get', 'post', 'patch', 'delete']
 
     def get_review(self):
         title_id = self.kwargs.get('title_id')
@@ -86,6 +108,20 @@ class CommentViewSet(ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user, review=self.get_review())
+
+    def get_permissions(self):
+        if self.request.method in ['GET']:
+            self.permission_classes = [IsAuthorNotUserOrReadOnlyPermission,]
+        elif self.request.method in ['POST']:
+            self.permission_classes = [IsAuthorNotUserOrReadOnlyPermission,]
+        elif self.request.method in ['PATCH', 'DELETE']:
+            if (self.request.user.is_authenticated
+                    and self.request.user.role == 'admin'):
+                self.permission_classes = [IsAdmin,]
+            else:
+                self.permission_classes =\
+                    [IsAuthorNotUserOrReadOnlyPermission,]
+        return super().get_permissions()
 
 
 User = get_user_model()

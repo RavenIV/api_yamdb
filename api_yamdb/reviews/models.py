@@ -92,12 +92,7 @@ class Title(models.Model):
         validators=[MinValueValidator(1), MaxValueValidator(date.today().year)]
     )
     description = models.TextField(blank=True)
-    category = models.ForeignKey(
-        Category,
-        on_delete=models.SET_NULL,
-        blank=False,
-        null=True
-    )
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, blank=False, null=True)
     genre = models.ManyToManyField(Genre, through='GenreTitle')
 
     class Meta:
@@ -129,6 +124,9 @@ class Review(models.Model):
         verbose_name = 'Отзыв'
         verbose_name_plural = 'Отзывы'
         default_related_name = 'review'
+        constraints = [
+            models.UniqueConstraint(fields=['author', 'title'], name='unique_review')
+        ]
 
     def __str__(self):
         return (
