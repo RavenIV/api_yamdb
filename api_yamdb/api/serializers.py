@@ -230,12 +230,12 @@ class CustomTokenObtainSerializer(TokenObtainSerializer):
             )
 
         if str(user.confirmation_code) != attrs['confirmation_code']:
-             raise ValidationError(
-                 {'confirmation_code': f'Неверный код подтверждения '
-                                       f'{user.confirmation_code} != '
-                                       f'{attrs["confirmation_code"]}'},
-                 code='invalid_confirmation_code',
-             )
+            raise ValidationError(
+                {'confirmation_code': f'Неверный код подтверждения '
+                                      f'{user.confirmation_code} != '
+                                      f'{attrs["confirmation_code"]}'},
+                code='invalid_confirmation_code',
+            )
 
         self.user = user
 
