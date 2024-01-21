@@ -59,10 +59,13 @@ class TitleViewSet(ModelViewSet):
     filterset_class = TitleFilter
 
 
-class ReviewViewSet(ModelViewSet):
-    serializer_class = ReviewSerializer
+class BaseContentViewSet(ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete']
     permission_classes = (IsAuthorOrAdminOrReadOnly,)
+
+
+class ReviewViewSet(BaseContentViewSet):
+    serializer_class = ReviewSerializer
 
     def get_title(self):
         return get_object_or_404(Title, id=self.kwargs.get('title_id'))
@@ -73,26 +76,9 @@ class ReviewViewSet(ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user, title=self.get_title())
 
-    # def get_permissions(self):
-    #     if self.request.method in ['GET', 'POST']:
-    #         self.permission_classes = [IsAuthorNotUserOrReadOnlyPermission,]
-    #     # elif self.request.method in ['POST']:
-    #     #     self.permission_classes = [IsAuthorNotUserOrReadOnlyPermission,]
-    #     elif self.request.method in ['PATCH', 'DELETE']:
-    #         if (self.request.user.is_authenticated
-    #                 and self.request.user.role == 'admin'):
-    #             self.permission_classes = [IsAdmin,]
-    #         else:
-    #             self.permission_classes = [
-    #                 IsAuthorNotUserOrReadOnlyPermission,
-    #             ]
-    #     return super().get_permissions()
 
-
-class CommentViewSet(ModelViewSet):
+class CommentViewSet(BaseContentViewSet):
     serializer_class = CommentSerializer
-    http_method_names = ['get', 'post', 'patch', 'delete']
-    permission_classes = (IsAuthorOrAdminOrReadOnly,)
 
     def get_review(self):
         return get_object_or_404(Review, id=self.kwargs.get('review_id'),
@@ -103,21 +89,6 @@ class CommentViewSet(ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user, review=self.get_review())
-
-    # def get_permissions(self):
-    #     if self.request.method in ['GET']:
-    #         self.permission_classes = [IsAuthorNotUserOrReadOnlyPermission,]
-    #     elif self.request.method in ['POST']:
-    #         self.permission_classes = [IsAuthorNotUserOrReadOnlyPermission,]
-    #     elif self.request.method in ['PATCH', 'DELETE']:
-    #         if (self.request.user.is_authenticated
-    #                 and self.request.user.role == 'admin'):
-    #             self.permission_classes = [IsAdmin,]
-    #         else:
-    #             self.permission_classes = [
-    #                 IsAuthorNotUserOrReadOnlyPermission,
-    #             ]
-    #     return super().get_permissions()
 
 
 User = get_user_model()
