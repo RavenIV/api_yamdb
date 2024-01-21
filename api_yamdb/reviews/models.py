@@ -89,15 +89,24 @@ def current_year():
 
 
 class Title(models.Model):
-    name = models.CharField(max_length=256)
+    name = models.CharField('Название', max_length=256)
     year = models.IntegerField(
-        validators=[MaxValueValidator(current_year()),]
+        'Год создания',
+        validators=[MaxValueValidator(current_year),]
     )
-    description = models.TextField(blank=True)
+    description = models.TextField('Описание', blank=True)
     category = models.ForeignKey(
-        Category, on_delete=models.SET_NULL, blank=False, null=True
+        Category,
+        on_delete=models.SET_NULL,
+        blank=False,
+        null=True,
+        verbose_name='Категория'
     )
-    genre = models.ManyToManyField(Genre, through='GenreTitle')
+    genre = models.ManyToManyField(
+        Genre,
+        through='GenreTitle',
+        verbose_name='Жанр'
+    )
 
     class Meta:
         verbose_name = 'Произведение'
