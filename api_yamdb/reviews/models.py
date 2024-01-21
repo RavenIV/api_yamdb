@@ -56,54 +56,64 @@ class CustomUser(AbstractUser):
 User = get_user_model()
 
 
-class Category(models.Model):
-    name = models.CharField(max_length=256)
-    slug = models.SlugField(unique=True, max_length=50)
+class Base(models.Model):
+    name = models.CharField('Название', max_length=256)
+    slug = models.SlugField('Слаг', unique=True, max_length=50)
 
     class Meta:
+        abstract = True
+        ordering = ('name',)
+
+    def __str__(self):
+        return (
+            f'{self.name=:20}, '
+            f'{self.slug=}'
+        )
+
+
+class Category(Base):
+
+    class Meta(Base.Meta):
         verbose_name = 'Категория'
         verbose_name_plural = 'Категории'
-        ordering = ('name',)
-
-    def __str__(self):
-        return (
-            f'{self.name=:20}, '
-            f'{self.slug=}'
-        )
 
 
-class Genre(models.Model):
-    name = models.CharField(max_length=256)
-    slug = models.SlugField(unique=True, max_length=50)
+class Genre(Base):
 
-    class Meta:
+    class Meta(Base.Meta):
         verbose_name = 'Жанр'
         verbose_name_plural = 'Жанры'
-        ordering = ('name',)
 
-    def __str__(self):
-        return (
-            f'{self.name=:20}, '
-            f'{self.slug=}'
-        )
+
+def current_year():
+    return date.today().year
 
 
 class Title(models.Model):
-    name = models.CharField(max_length=256)
+    name = models.CharField('Название', max_length=256)
     year = models.IntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(date.today().year)]
+        'Год создания',
+        validators=[MaxValueValidator(current_year),]
     )
-    description = models.TextField(blank=True)
+    description = models.TextField('Описание', blank=True)
     category = models.ForeignKey(
-        Category, on_delete=models.SET_NULL, blank=False, null=True
+        Category,
+        on_delete=models.SET_NULL,
+        blank=False,
+        null=True,
+        verbose_name='Категория'
     )
-    genre = models.ManyToManyField(Genre, through='GenreTitle')
+    genre = models.ManyToManyField(
+        Genre,
+        through='GenreTitle',
+        verbose_name='Жанр'
+    )
 
     class Meta:
         verbose_name = 'Произведение'
         verbose_name_plural = 'Произведения'
         default_related_name = 'titles'
-        ordering = ('year',)
+        ordering = ('name',)
 
     def __str__(self):
         return (

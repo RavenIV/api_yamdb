@@ -16,7 +16,8 @@ from .filters import TitleFilter
 from .permissions import (IsAdminOrReadOnly, IsAdmin, IsAdminOrSuperuser,
                           IsAuthorNotUserOrReadOnlyPermission)
 from .permissions import IsAuthorOrAdminOrReadOnly
-from .serializers import (CategorySerializer, GenreSerializer, TitleSerializer,
+from .serializers import (CategorySerializer, GenreSerializer,
+                          TitleReadSerializer, TitleCreateUpdateSerializer,
                           ReviewSerializer, CommentSerializer,
                           UserSerializer, UserMeSerializer,
                           CustomTokenObtainSerializer, RegisterSerializer)
@@ -52,11 +53,16 @@ class GenreViewSet(CreateListDestroyViewSet):
 class TitleViewSet(ModelViewSet):
     """Вьюсет для произведений."""
     queryset = Title.objects.all()
-    serializer_class = TitleSerializer
     filter_backends = (DjangoFilterBackend,)
     http_method_names = ['get', 'post', 'patch', 'delete']
     permission_classes = (IsAdminOrReadOnly,)
     filterset_class = TitleFilter
+
+    def get_serializer_class(self):
+        if self.action in ['list', 'retrieve']:
+            return TitleReadSerializer
+        if self.action in ['create', 'partial_update']:
+            return TitleCreateUpdateSerializer
 
 
 class BaseContentViewSet(ModelViewSet):
