@@ -1,6 +1,5 @@
 from datetime import date
 
-from django.db.models import Avg
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.core.validators import (RegexValidator, MinValueValidator,
@@ -42,18 +41,12 @@ class CustomSlugRelatedField(serializers.SlugRelatedField):
 class TitleReadSerializer(serializers.ModelSerializer):
     genre = GenreSerializer(many=True)
     category = CategorySerializer()
-    rating = serializers.SerializerMethodField()
 
     class Meta:
         model = Title
         fields = (
             'id', 'name', 'year', 'rating', 'description', 'genre', 'category'
         )
-
-    def get_rating(self, obj):
-        avg_score = Review.objects.filter(title=obj).aggregate(
-            Avg('score'))['score__avg']
-        return round(avg_score) if avg_score is not None else None
 
 
 class TitleCreateUpdateSerializer(serializers.ModelSerializer):
@@ -106,35 +99,6 @@ class ReviewSerializer(serializers.ModelSerializer):
                                               'произведение уже существует')
         return super().create(validated_data)
 
-    # def get_serializer(self, *args, **kwargs):
-    #     serializer_class = self.get_serializer_class()
-    #     kwargs['context'] = self.get_serializer_context()
-    #     kwargs['context'].update({'title': self.get_title()})
-    #     return serializer_class(*args, **kwargs)
-
-    # def get_serializer(self, *args, **kwargs):
-    #     serializer_class = self.get_serializer_class()
-    #     kwargs['context'] = self.get_serializer_context()
-    #     kwargs['context'].update({'title': TitleSerializer(self.get_object().title).data})
-    #     # kwargs['data']['title'] = TitleSerializer(self.get_object().title).data
-    #     return serializer_class(*args, **kwargs)
-
-    # def validate(self, attrs):
-    #     author = attrs.get('author')
-    #     title_id = self.context.get('title_id')
-    #     if Review.objects.filter(author=author, title__id=title_id).exists():
-    #         raise serializers.ValidationError('Отзыв от данного автора на это произведение уже существует')
-    #     return attrs
-
-    # def validate(self, attrs):
-    #     author = attrs.get('author')
-    #     title = attrs.get('title')
-    #     if author.is_authenticated and Review.objects.filter(author=author,
-    #                                                          title=title).exists():
-    #         raise serializers.ValidationError(
-    #             'Отзыв от данного автора на это произведение уже существует')
-    #     return attrs
-
 
 class CommentSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
@@ -146,7 +110,6 @@ class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = ('id', 'text', 'author', 'pub_date')
-        # read_only_fields = ('id', 'pub_date')
 
 
 User = get_user_model()

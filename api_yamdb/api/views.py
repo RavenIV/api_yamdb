@@ -3,7 +3,6 @@ from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, permissions
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
 from rest_framework.mixins import (
     CreateModelMixin, ListModelMixin, DestroyModelMixin
 )
@@ -13,9 +12,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 from reviews.models import Category, Genre, Title, Review
 from .filters import TitleFilter
-from .permissions import (IsAdminOrReadOnly, IsAdmin, IsAdminOrSuperuser,
-                          IsAuthorNotUserOrReadOnlyPermission)
-from .permissions import IsAuthorOrAdminOrReadOnly
+from .permissions import (IsAdminOrReadOnly, IsAdminOrSuperuser, IsAuthorOrAdminOrReadOnly)
 from .serializers import (CategorySerializer, GenreSerializer,
                           TitleReadSerializer, TitleCreateUpdateSerializer,
                           ReviewSerializer, CommentSerializer,
