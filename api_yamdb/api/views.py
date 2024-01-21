@@ -39,14 +39,10 @@ class CategoryViewSet(CreateListDestroyViewSet):
     search_fields = ('name',)
 
 
-class GenreViewSet(CreateListDestroyViewSet):
+class GenreViewSet(CategoryViewSet):
     """Вьюсет для получения списка, создания и удаления жанров."""
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    lookup_field = 'slug'
-    permission_classes = (IsAdminOrReadOnly,)
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ('name',)
 
 
 class TitleViewSet(ModelViewSet):
