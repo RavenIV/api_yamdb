@@ -3,7 +3,8 @@ from datetime import date
 from django.db.models import Avg
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
-from django.core.validators import RegexValidator
+from django.core.validators import (RegexValidator, MinValueValidator,
+                                    MaxValueValidator)
 from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.exceptions import NotFound, ValidationError
@@ -12,6 +13,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.validators import UniqueValidator
 
 from reviews.models import Category, Genre, Title, Review, Comment
+from api_yamdb.constants import MIN_RATING, MAX_RATING
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -72,17 +74,55 @@ class ReviewSerializer(serializers.ModelSerializer):
         read_only=True,
         default=serializers.CurrentUserDefault()
     )
+    score = serializers.IntegerField(
+        validators=[
+            MinValueValidator(MIN_RATING),
+            MaxValueValidator(MAX_RATING)
+        ]
+    )
 
     class Meta:
         model = Review
         fields = ('id', 'text', 'author', 'score', 'pub_date')
-        read_only_fields = ('id', 'pub_date')
 
-    def validate_score(self, value):
-        if value < 1 or value > 10:
-            raise serializers.ValidationError('Оценка должна быть в диапазоне '
-                                              'от 1 до 10.')
-        return value
+    def create(self, validated_data):
+        author = validated_data.get('author')
+        title = validated_data.get('title')
+        if (author.is_authenticated
+                and Review.objects.filter(author=author,
+                                          title=title).exists()):
+            raise serializers.ValidationError('Отзыв от данного автора на это '
+                                              'произведение уже существует')
+        return super().create(validated_data)
+
+    # def get_serializer(self, *args, **kwargs):
+    #     serializer_class = self.get_serializer_class()
+    #     kwargs['context'] = self.get_serializer_context()
+    #     kwargs['context'].update({'title': self.get_title()})
+    #     return serializer_class(*args, **kwargs)
+
+    # def get_serializer(self, *args, **kwargs):
+    #     serializer_class = self.get_serializer_class()
+    #     kwargs['context'] = self.get_serializer_context()
+    #     kwargs['context'].update({'title': TitleSerializer(self.get_object().title).data})
+    #     # kwargs['data']['title'] = TitleSerializer(self.get_object().title).data
+    #     return serializer_class(*args, **kwargs)
+
+    # def validate(self, attrs):
+    #     author = attrs.get('author')
+    #     title_id = self.context.get('title_id')
+    #     if Review.objects.filter(author=author, title__id=title_id).exists():
+    #         raise serializers.ValidationError('Отзыв от данного автора на это произведение уже существует')
+    #     return attrs
+
+    # def validate(self, attrs):
+    #     author = attrs.get('author')
+    #     title = attrs.get('title')
+    #     if author.is_authenticated and Review.objects.filter(author=author,
+    #                                                          title=title).exists():
+    #         raise serializers.ValidationError(
+    #             'Отзыв от данного автора на это произведение уже существует')
+    #     return attrs
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -95,7 +135,7 @@ class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = ('id', 'text', 'author', 'pub_date')
-        read_only_fields = ('id', 'pub_date')
+        # read_only_fields = ('id', 'pub_date')
 
 
 User = get_user_model()

@@ -1,4 +1,5 @@
-from rest_framework import permissions
+from rest_framework import permissions, status
+from rest_framework.exceptions import MethodNotAllowed
 
 
 class IsAuthorNotUserOrReadOnlyPermission(permissions.
@@ -39,3 +40,19 @@ class IsAdminOrSuperuser(permissions.BasePermission):
             request.user.role == 'admin'
             or request.user.is_superuser
         )
+
+
+class IsAuthorOrAdminOrReadOnly(permissions.BasePermission):
+    def has_permission(self, request, view):
+        if request.method == 'PUT':
+            raise MethodNotAllowed('PUT')
+        if request.method == 'GET':
+            return True
+        if request.method in ['PATCH', 'DELETE', 'POST']:
+            return request.user.is_authenticated
+
+    def has_object_permission(self, request, view, obj):
+        if request.method == 'GET':
+            return True
+        if request.method in ['PATCH', 'DELETE']:
+            return request.user.role != 'user' or obj.author == request.user
