@@ -84,10 +84,14 @@ class Genre(Base):
         verbose_name_plural = 'Жанры'
 
 
+def current_year():
+    return date.today().year
+
+
 class Title(models.Model):
     name = models.CharField(max_length=256)
     year = models.IntegerField(
-        validators=[MaxValueValidator(date.today().year),]
+        validators=[MaxValueValidator(current_year()),]
     )
     description = models.TextField(blank=True)
     category = models.ForeignKey(
