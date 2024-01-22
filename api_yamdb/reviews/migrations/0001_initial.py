@@ -52,26 +52,28 @@ class Migration(migrations.Migration):
             name='Category',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=256)),
-                ('slug', models.SlugField(unique=True)),
+                ('name', models.CharField(max_length=256, verbose_name='Название')),
+                ('slug', models.SlugField(unique=True, verbose_name='Слаг')),
             ],
             options={
                 'verbose_name': 'Категория',
                 'verbose_name_plural': 'Категории',
                 'ordering': ('name',),
+                'abstract': False,
             },
         ),
         migrations.CreateModel(
             name='Genre',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=256)),
-                ('slug', models.SlugField(unique=True)),
+                ('name', models.CharField(max_length=256, verbose_name='Название')),
+                ('slug', models.SlugField(unique=True, verbose_name='Слаг')),
             ],
             options={
                 'verbose_name': 'Жанр',
                 'verbose_name_plural': 'Жанры',
                 'ordering': ('name',),
+                'abstract': False,
             },
         ),
         migrations.CreateModel(
@@ -86,7 +88,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('name', models.CharField(max_length=256)),
-                ('year', models.IntegerField(validators=[django.core.validators.MinValueValidator(1), django.core.validators.MaxValueValidator(2024)])),
+                ('year', models.IntegerField(validators=[django.core.validators.MaxValueValidator(2024)])),
                 ('description', models.TextField(blank=True)),
                 ('category', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='titles', to='reviews.category')),
                 ('genre', models.ManyToManyField(related_name='titles', through='reviews.GenreTitle', to='reviews.Genre')),
@@ -94,7 +96,7 @@ class Migration(migrations.Migration):
             options={
                 'verbose_name': 'Произведение',
                 'verbose_name_plural': 'Произведения',
-                'ordering': ('year',),
+                'ordering': ('name',),
                 'default_related_name': 'titles',
             },
         ),
