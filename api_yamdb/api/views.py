@@ -1,23 +1,30 @@
+import uuid
+
 from django.contrib.auth import get_user_model
+from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, permissions
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view
+from rest_framework.exceptions import ValidationError
 from rest_framework.mixins import (
     CreateModelMixin, ListModelMixin, DestroyModelMixin
 )
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt import tokens
 
+from api_yamdb.constants import YAMDB_EMAIL
 from reviews.models import Category, Genre, Title, Review
 from .filters import TitleFilter
-from .permissions import (IsAdminOrReadOnly, IsAdminOrSuperuser, IsAuthorOrAdminOrReadOnly)
+from .permissions import (IsAdminOrReadOnly, IsAdmin,
+                          IsAuthorOrAdminOrReadOnly)
 from .serializers import (CategorySerializer, GenreSerializer,
                           TitleReadSerializer, TitleCreateUpdateSerializer,
                           ReviewSerializer, CommentSerializer,
                           UserSerializer, UserMeSerializer,
-                          CustomTokenObtainSerializer, RegisterSerializer)
+                          RegisterCodObtainSerializer)
 
 
 class CreateListDestroyViewSet(CreateModelMixin,
@@ -37,14 +44,10 @@ class CategoryViewSet(CreateListDestroyViewSet):
     search_fields = ('name',)
 
 
-class GenreViewSet(CreateListDestroyViewSet):
+class GenreViewSet(CategoryViewSet):
     """Вьюсет для получения списка, создания и удаления жанров."""
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    lookup_field = 'slug'
-    permission_classes = (IsAdminOrReadOnly,)
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ('name',)
 
 
 class TitleViewSet(ModelViewSet):
@@ -81,6 +84,7 @@ class ReviewViewSet(BaseContentViewSet):
 
 
 class CommentViewSet(BaseContentViewSet):
+
     serializer_class = CommentSerializer
 
     def get_review(self):
@@ -104,15 +108,16 @@ class UserViewSet(ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete']
     filter_backends = (filters.SearchFilter,)
     search_fields = ('username',)
-    permission_classes = (permissions.IsAuthenticated, IsAdminOrSuperuser,)
+    permission_classes = (IsAdmin,)
 
     @action(
         detail=False,
         methods=['get', 'patch'],
         permission_classes=(permissions.IsAuthenticated,),
-        serializer_class=UserMeSerializer
+        serializer_class=UserMeSerializer,
+        url_path='me'
     )
-    def me(self, request, pk=None):
+    def user_info(self, request, pk=None):
         if request.method == 'PATCH':
             serializer = self.get_serializer(
                 request.user, data=request.data, partial=True)
@@ -121,16 +126,43 @@ class UserViewSet(ModelViewSet):
         return Response(self.get_serializer(request.user).data)
 
 
-class RegisterModelViewSet(ModelViewSet):
+class RegisterCodObtainViewSet(ModelViewSet):
     queryset = User.objects.all()
-    serializer_class = RegisterSerializer
+    serializer_class = RegisterCodObtainSerializer
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+        send_mail(
+            subject='YAmdb confirmation code',
+            message=str(uuid.uuid4),
+            from_email=YAMDB_EMAIL,
+            recipient_list=[request.data['email']]
+        )
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class TokenObtainView(TokenObtainPairView):
-    serializer_class = CustomTokenObtainSerializer
+@api_view(['POST'])
+def token_obtain(request):
+    if 'username' not in request.data:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    username = request.data['username']
+    user = User.objects.filter(username=username).first()
+
+    if not user:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if str(user.confirmation_code) != request.data['confirmation_code']:
+        raise ValidationError(
+            {'confirmation_code': f'Неверный код подтверждения '
+                                  f'{user.confirmation_code} != '
+                                  f'{request.data["confirmation_code"]}'},
+            code='invalid_confirmation_code',
+        )
+
+    user.last_login = timezone.now()
+    user.save()
+    return Response({
+        'token': str(tokens.RefreshToken.for_user(user).access_token)})
