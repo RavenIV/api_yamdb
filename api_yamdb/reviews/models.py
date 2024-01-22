@@ -5,16 +5,13 @@ from django.db import models
 from django.core.validators import (
     MinValueValidator, MaxValueValidator, EmailValidator
 )
-from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 
+from api_yamdb.constants import Role, USERNAME_MAX_LENGTH
+from api_yamdb.validators import forbidden_usernames
 
-class CustomUser(AbstractUser):
-    ROLE_CHOICES = [
-        ('user', 'user'),
-        ('moderator', 'moderator'),
-        ('admin', 'admin'),
-    ]
+
+class User(AbstractUser):
     email = models.EmailField(
         'Адресс электронной почты',
         unique=True,
@@ -26,18 +23,32 @@ class CustomUser(AbstractUser):
                       'электронной почты уже существует.',
         },
     )
+    username = models.CharField(
+        'Имя пользователя',
+        unique=True, max_length=USERNAME_MAX_LENGTH,
+        validators=[forbidden_usernames],
+    )
     bio = models.TextField('О себе', blank=True)
     role = models.CharField(
-        'Тип пользователя', max_length=16,
-        choices=ROLE_CHOICES, default='user'
+        'Тип пользователя',
+        max_length=max(len(role[0]) for role in Role.choices),
+        choices=Role.choices, default=Role.USER
     )
     confirmation_code = models.UUIDField(
-        primary_key=False, default=uuid.uuid4, editable=False)
+        primary_key=False, default=uuid.uuid4, editable=True)
 
     class Meta:
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
-        ordering = ('date_joined',)
+        ordering = ('id', 'date_joined')
+
+    @property
+    def is_moderator(self):
+        return self.role == Role.MODERATOR
+
+    @property
+    def is_admin(self):
+        return self.role == Role.ADMIN or self.is_staff
 
     def __str__(self):
         return (
@@ -50,9 +61,6 @@ class CustomUser(AbstractUser):
             f'{self.is_active=}, '
             f'{self.bio=:.20}'
         )
-
-
-User = get_user_model()
 
 
 class Base(models.Model):
