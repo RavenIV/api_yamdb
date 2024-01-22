@@ -1,13 +1,14 @@
 from datetime import date
 import uuid
 
-from django.db import models
+from django.contrib.auth.models import AbstractUser
 from django.core.validators import (
     MinValueValidator, MaxValueValidator, EmailValidator
 )
-from django.contrib.auth.models import AbstractUser
+from django.db import models
+from django.db.models import Avg
 
-from api_yamdb.constants import Role, USERNAME_MAX_LENGTH
+from api_yamdb.constants import Role, USERNAME_MAX_LENGTH, MIN_RATING, MAX_RATING
 from api_yamdb.validators import forbidden_usernames
 
 
@@ -115,6 +116,12 @@ class Title(models.Model):
         through='GenreTitle',
         verbose_name='Жанр'
     )
+    rating = models.IntegerField('Рейтинг', blank=True, null=True)
+
+    def update_rating(self):
+        avg_score = self.review.aggregate(Avg('score'))['score__avg']
+        self.rating = round(avg_score) if avg_score is not None else None
+        self.save()
 
     class Meta:
         verbose_name = 'Произведение'
@@ -132,16 +139,34 @@ class Title(models.Model):
         )
 
 
-class Review(models.Model):
-    text = models.TextField()
-    title = models.ForeignKey(Title, on_delete=models.CASCADE)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
-    score = models.IntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(10)]
-    )
-    pub_date = models.DateTimeField(auto_now_add=True, db_index=True)
+class Post(models.Model):
+    text = models.TextField(verbose_name='Текст')
+    author = models.ForeignKey(User, on_delete=models.CASCADE,
+                               verbose_name='Автор')
+    pub_date = models.DateTimeField(auto_now_add=True, db_index=True,
+                                    verbose_name='Дата публикации')
 
     class Meta:
+        abstract = True
+        ordering = ('pub_date',)
+
+    def __str__(self):
+        return (
+            f'{self.text=:.20}, '
+            f'{self.author=}, '
+            f'{self.pub_date=}'
+        )
+
+
+class Review(Post):
+    title = models.ForeignKey(Title, on_delete=models.CASCADE,
+                              verbose_name='Произведение')
+    score = models.IntegerField(
+        validators=[MinValueValidator(MIN_RATING), MaxValueValidator(MAX_RATING)],
+        verbose_name='Оценка'
+    )
+
+    class Meta(Post.Meta):
         verbose_name = 'Отзыв'
         verbose_name_plural = 'Отзывы'
         default_related_name = 'review'
@@ -150,36 +175,37 @@ class Review(models.Model):
                 fields=['author', 'title'], name='unique_review'
             )
         ]
-        ordering = ('pub_date',)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self.title.update_rating()
+
+    def delete(self, *args, **kwargs):
+        title = self.title
+        super().delete(*args, **kwargs)
+        title.update_rating()
 
     def __str__(self):
         return (
-            f'{self.text=:.20}, '
-            f'{self.title=}, '
-            f'{self.author=}, '
-            f'{self.score=}, '
-            f'{self.pub_date=}'
+            super().__str__() +
+            f', {self.title=}, '
+            f'{self.score=}'
         )
 
 
-class Comment(models.Model):
-    text = models.TextField()
-    review = models.ForeignKey(Review, on_delete=models.CASCADE)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
-    pub_date = models.DateTimeField(auto_now_add=True, db_index=True)
+class Comment(Post):
+    review = models.ForeignKey(Review, on_delete=models.CASCADE,
+                               verbose_name='Отзыв')
 
-    class Meta:
+    class Meta(Post.Meta):
         verbose_name = 'Комментарий'
         verbose_name_plural = 'Комментарии'
         default_related_name = 'comment'
-        ordering = ('pub_date',)
 
     def __str__(self):
         return (
-            f'{self.text=:.20}, '
-            f'{self.review=:.20}, '
-            f'{self.author=}, '
-            f'{self.pub_date=}'
+            super().__str__() +
+            f', {self.review=:.20}'
         )
 
 
