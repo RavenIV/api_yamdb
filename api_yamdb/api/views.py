@@ -1,24 +1,30 @@
+import uuid
+
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from django.core.mail import send_mail
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, permissions
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view
+from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from rest_framework.mixins import (
     CreateModelMixin, ListModelMixin, DestroyModelMixin
 )
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt import tokens
 
 from reviews.models import Category, Genre, Title, Review
 from .filters import TitleFilter
-from .permissions import (IsAdminOrReadOnly, IsAdmin, IsAdminOrSuperuser,
-                          IsAuthorNotUserOrReadOnlyPermission)
+from .permissions import (IsAdminOrReadOnly, IsAdmin,
+                          IsAuthorOrAdminOrReadOnly)
 from .serializers import (CategorySerializer, GenreSerializer, TitleSerializer,
                           ReviewSerializer, CommentSerializer,
                           UserSerializer, UserMeSerializer,
-                          CustomTokenObtainSerializer, RegisterSerializer)
+                          RegisterCodObtainSerializer)
+from api_yamdb.constants import YAMDB_EMAIL
 
 
 class CreateListDestroyViewSet(CreateModelMixin,
@@ -81,16 +87,16 @@ class ReviewViewSet(ModelViewSet):
 
     def get_permissions(self):
         if self.request.method in ['GET']:
-            self.permission_classes = [IsAuthorNotUserOrReadOnlyPermission,]
+            self.permission_classes = [IsAuthorOrAdminOrReadOnly,]
         elif self.request.method in ['POST']:
-            self.permission_classes = [IsAuthorNotUserOrReadOnlyPermission,]
+            self.permission_classes = [IsAuthorOrAdminOrReadOnly,]
         elif self.request.method in ['PATCH', 'DELETE']:
             if (self.request.user.is_authenticated
                     and self.request.user.role == 'admin'):
                 self.permission_classes = [IsAdmin,]
             else:
                 self.permission_classes = [
-                    IsAuthorNotUserOrReadOnlyPermission,
+                    IsAuthorOrAdminOrReadOnly,
                 ]
         return super().get_permissions()
 
@@ -113,16 +119,16 @@ class CommentViewSet(ModelViewSet):
 
     def get_permissions(self):
         if self.request.method in ['GET']:
-            self.permission_classes = [IsAuthorNotUserOrReadOnlyPermission,]
+            self.permission_classes = [IsAuthorOrAdminOrReadOnly,]
         elif self.request.method in ['POST']:
-            self.permission_classes = [IsAuthorNotUserOrReadOnlyPermission,]
+            self.permission_classes = [IsAuthorOrAdminOrReadOnly,]
         elif self.request.method in ['PATCH', 'DELETE']:
             if (self.request.user.is_authenticated
                     and self.request.user.role == 'admin'):
                 self.permission_classes = [IsAdmin,]
             else:
                 self.permission_classes = [
-                    IsAuthorNotUserOrReadOnlyPermission,
+                    IsAuthorOrAdminOrReadOnly,
                 ]
         return super().get_permissions()
 
@@ -137,7 +143,7 @@ class UserViewSet(ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete']
     filter_backends = (filters.SearchFilter,)
     search_fields = ('username',)
-    permission_classes = (permissions.IsAuthenticated, IsAdminOrSuperuser,)
+    permission_classes = (IsAdmin,)
 
     @action(
         detail=False,
@@ -154,16 +160,43 @@ class UserViewSet(ModelViewSet):
         return Response(self.get_serializer(request.user).data)
 
 
-class RegisterModelViewSet(ModelViewSet):
+class RegisterCodObtainViewSet(ModelViewSet):
     queryset = User.objects.all()
-    serializer_class = RegisterSerializer
+    serializer_class = RegisterCodObtainSerializer
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+        send_mail(
+            subject='YAmdb confirmation code',
+            message=str(uuid.uuid4),
+            from_email=YAMDB_EMAIL,
+            recipient_list=[request.data['email']]
+        )
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class TokenObtainView(TokenObtainPairView):
-    serializer_class = CustomTokenObtainSerializer
+@api_view(['POST'])
+def token_obtain(request):
+    if 'username' not in request.data:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    username = request.data['username']
+    user = User.objects.filter(username=username).first()
+
+    if not user:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if str(user.confirmation_code) != request.data['confirmation_code']:
+        raise ValidationError(
+            {'confirmation_code': f'Неверный код подтверждения '
+                                  f'{user.confirmation_code} != '
+                                  f'{request.data["confirmation_code"]}'},
+            code='invalid_confirmation_code',
+        )
+
+    user.last_login = timezone.now()
+    user.save()
+    return Response({
+        'token': str(tokens.RefreshToken.for_user(user).access_token)})
