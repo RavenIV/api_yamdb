@@ -105,14 +105,12 @@ User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(
-        max_length=USERNAME_MAX_LENGTH, required=True,
-        validators=[UniqueValidator(queryset=User.objects.all())])
 
     class Meta:
         model = User
         fields = (
-            'username', 'email', 'first_name', 'last_name', 'bio', 'role')
+            'username', 'email', 'first_name', 'last_name', 'bio', 'role'
+        )
 
     def validate_username(self, value):
         if forbidden_usernames(value) is None:

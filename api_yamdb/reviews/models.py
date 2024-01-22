@@ -111,11 +111,7 @@ class Title(models.Model):
         null=True,
         verbose_name='Категория'
     )
-    genre = models.ManyToManyField(
-        Genre,
-        # through='GenreTitle',
-        verbose_name='Жанр'
-    )
+    genre = models.ManyToManyField(Genre, verbose_name='Жанр')
     rating = models.IntegerField('Рейтинг', blank=True, null=True)
 
     def update_rating(self):
@@ -162,7 +158,9 @@ class Review(Post):
     title = models.ForeignKey(Title, on_delete=models.CASCADE,
                               verbose_name='Произведение')
     score = models.IntegerField(
-        validators=[MinValueValidator(MIN_RATING), MaxValueValidator(MAX_RATING)],
+        validators=[
+            MinValueValidator(MIN_RATING), MaxValueValidator(MAX_RATING)
+        ],
         verbose_name='Оценка'
     )
 
@@ -187,8 +185,8 @@ class Review(Post):
 
     def __str__(self):
         return (
-            super().__str__() +
-            f', {self.title=}, '
+            f'{super().__str__()}, '
+            f'{self.title=}, '
             f'{self.score=}'
         )
 
@@ -204,11 +202,6 @@ class Comment(Post):
 
     def __str__(self):
         return (
-            super().__str__() +
-            f', {self.review=:.20}'
+            f'{super().__str__()}, '
+            f'{self.review=:.20}'
         )
-
-
-# class GenreTitle(models.Model):
-#     genre = models.ForeignKey(Genre, on_delete=models.SET_NULL, null=True)
-#     title = models.ForeignKey(Title, on_delete=models.CASCADE)
