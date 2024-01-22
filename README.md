@@ -23,67 +23,71 @@
 ## Получение JWT-токена
 Получение JWT-токена в обмен на username и confirmation code. Права доступа: Доступно без токена.
 
-## USERS
-Пользователи
-
-### Примеры
-- Получить список всех пользователей: GET /api/v1/users/. Права доступа: Администратор.
-- Добавить нового пользователя: POST /api/v1/users/ с данными {"username": "<username>", "email": "<email>", "first_name": "<first_name>", "last_name": "<last_name>", "bio": "<bio>", "role": "<role>"}. Права доступа: Администратор.
-- Получить пользователя по username: GET /api/v1/users/{username}/. Права доступа: Администратор.
-- Изменить данные пользователя по username: PATCH /api/v1/users/{username}/ с данными {"username": "<username>", "email": "<email>", "first_name": "<first_name>", "last_name": "<last_name>", "bio": "<bio>", "role": "<role>"}. Права доступа: Администратор.
-- Удалить пользователя по username: DELETE /api/v1/users/{username}/. Права доступа: Администратор.
-- Получить данные своей учетной записи: GET /api/v1/users/me/. Права доступа: Любой авторизованный пользователь.
-
-## CATEGORIES
-Категории (типы) произведений
-
-### Примеры
-- Получить список всех категорий: GET /api/v1/categories/. Права доступа: Доступно без токена.
-- Добавить новую категорию: POST /api/v1/categories/ с данными {"name": "<name>", "slug": "<slug>"}. Права доступа: Администратор.
-- Удалить категорию: DELETE /api/v1/categories/{slug}/. Права доступа: Администратор.
-
-## GENRES
-Категории жанров
-
-### Примеры
-- Получить список всех жанров: GET /api/v1/genres/. Права доступа: Доступно без токена.
-- Добавить новый жанр: POST /api/v1/genres/ с данными {"name": "<name>", "slug": "<slug>"}. Права доступа: Администратор.
-- Удалить жанр: DELETE /api/v1/genres/{slug}/. Права доступа: Администратор.
-
-## TITLES
-Произведения, к которым пишут отзывы (определённый фильм, книга или песенка).
-
-### Примеры
-- Получить список всех произведений: GET /api/v1/titles/. Права доступа: Доступно без токена.
-- Добавить новое произведение: POST /api/v1/titles/ с данными {"name": "<name>", "year": <year>, "description": "<description>", "genre": ["<genre>"], "category": "<category>"}. Права доступа: Администратор.
-- Получить информацию о произведении: GET /api/v1/titles/{titles_id}/. Права доступа: Доступно без токена.
-- Частичное обновление информации о произведении: PATCH /api/v1/titles/{titles_id}/ с данными {"name": "<name>", "year": <year>, "description": "<description>", "genre": ["<genre>"], "category": "<category>"}. Права доступа: Администратор.
-- Удалить произведение: DELETE /api/v1/titles/{titles_id}/. Права доступа: Администратор.
-
-## REVIEWS
-Отзывы
-
-### Примеры
-- Получить список всех отзывов: GET /api/v1/titles/{title_id}/reviews/. Права доступа: Доступно без токена.
-- Добавить новый отзыв: POST /api/v1/titles/{title_id}/reviews/ с данными {"text": "<text>", "score": <score>}. Права доступа: Аутентифицированные пользователи.
-- Получить отзыв по id: GET /api/v1/titles/{title_id}/reviews/{review_id}/. Права доступа: Доступно без токена.
-- Частичное обновление отзыва по id: PATCH /api/v1/titles/{title_id}/reviews/{review_id}/ с данными {"text": "<text>", "score": <score>}. Права доступа: Автор отзыва, модератор или администратор.
-- Удалить отзыв по id: DELETE /api/v1/titles/{title_id}/reviews/{review_id}/. Права доступа: Автор отзыва, модератор или администратор.
-
-## COMMENTS
-Комментарии к отзывам
-
-### Примеры
-- Получить список всех комментариев к отзыву: GET /api/v1/titles/{title_id}/reviews/{review_id}/comments/. Права доступа: Доступно без токена.
-- Добавить новый комментарий для отзыва: POST /api/v1/titles/{title_id}/reviews/{review_id}/comments/ с данными {"text": "<text>"}. Права доступа: Аутентифицированные пользователи.
-- Получить комментарий для отзыва по id: GET /api/v1/titles/{title_id}/reviews/{review_id}/comments/{comment_id}/. Права доступа: Доступно без токена.
-- Частичное обновление комментария к отзыву по id: PATCH /api/v1/titles/{title_id}/reviews/{review_id}/comments/{comment_id}/ с данными {"text": "<text>"}. Права доступа: Автор комментария, модератор или администратор.
-- Удалить комментарий к отзыву по id: DELETE /api/v1/titles/{title_id}/reviews/{review_id}/comments/{comment_id}/. Права доступа: Автор комментария, модератор или администратор.
-
-
 ## Использованные технологии
 В проекте были использованы следующие фреймворки и библиотеки:
-- Django (3.2): Высокоуровневый веб-фреймворк Python.
-- djangorestframework (3.12.4): Гибкий фреймворк для построения веб-API.
-- requests (2.26.0): Библиотека Python для отправки HTTP-запросов.
-- rest_framework_simplejwt: Библиотека для работы с JWT-токенами.
+- Python (3.9)
+- Django (3.2): Высокоуровневый веб-фреймворк Python
+- djangorestframework (3.12.4): Гибкий фреймворк для построения веб-API
+- requests (2.26.0): Библиотека Python для отправки HTTP-запросов
+- rest_framework_simplejwt: Библиотека для работы с JWT-токенами
+- django-filter (23.5): Библиотека для фильтрации данных на основе полей моделей
+
+## Как запустить проект
+
+Клонировать репозиторий и перейти в него в командной строке:
+
+```
+git clone git@github.com:RavenIV/api_yamdb.git
+```
+
+```
+cd api_yamdb/
+```
+
+Создать и активировать виртуальное окружение:
+
+```
+python3 -m venv venv
+```
+
+```
+source venv/bin/activate
+```
+
+Установить зависимости из файла requirements.txt:
+
+```
+pip install -r requirements.txt
+```
+
+Выполнить миграции из директории проекта:
+
+```
+cd api_yamdb/
+```
+
+```
+python3 manage.py migrate
+```
+
+Импортировать данные из CSV-файлов:
+
+```
+python3 manage.py import_csv
+```
+
+Запустить проект:
+
+```
+python3 manage.py runserver
+```
+
+## Где посмотреть документацию
+
+Документацию к API проекта YAMDB, содержащую примеры запросов и ожидаемых ответов, можно посмотреть после запуска проекта по [ссылке](http://127.0.0.1:8000/redoc/).
+
+## Разработчики
+
+* Ирина Воронцова (https://github.com/RavenIV)
+* Сергей Запорожан (https://github.com/Zixers)
+* Лада Колотова (https://github.com/lada-nk)
