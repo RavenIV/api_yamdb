@@ -44,24 +44,25 @@ class CategoryViewSet(CreateListDestroyViewSet):
     search_fields = ('name',)
 
 
-class GenreViewSet(CreateListDestroyViewSet):
+class GenreViewSet(CategoryViewSet):
     """Вьюсет для получения списка, создания и удаления жанров."""
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    lookup_field = 'slug'
-    permission_classes = (IsAdminOrReadOnly,)
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ('name',)
 
 
 class TitleViewSet(ModelViewSet):
     """Вьюсет для произведений."""
     queryset = Title.objects.all()
-    serializer_class = TitleSerializer
     filter_backends = (DjangoFilterBackend,)
     http_method_names = ['get', 'post', 'patch', 'delete']
     permission_classes = (IsAdminOrReadOnly,)
     filterset_class = TitleFilter
+
+    def get_serializer_class(self):
+        if self.action in ['list', 'retrieve']:
+            return TitleReadSerializer
+        if self.action in ['create', 'partial_update']:
+            return TitleCreateUpdateSerializer
 
 
 class ReviewViewSet(ModelViewSet):

@@ -26,22 +26,9 @@ class GenreSerializer(serializers.ModelSerializer):
         fields = ('name', 'slug')
 
 
-class CustomSlugRelatedField(serializers.SlugRelatedField):
-
-    def to_representation(self, obj):
-        return {
-            "name": obj.name,
-            "slug": obj.slug
-        }
-
-
-class TitleSerializer(serializers.ModelSerializer):
-    genre = CustomSlugRelatedField(
-        many=True, queryset=Genre.objects.all(), slug_field='slug'
-    )
-    category = CustomSlugRelatedField(
-        queryset=Category.objects.all(), slug_field='slug'
-    )
+class TitleReadSerializer(serializers.ModelSerializer):
+    genre = GenreSerializer(many=True)
+    category = CategorySerializer()
     rating = serializers.SerializerMethodField()
 
     class Meta:
@@ -49,17 +36,32 @@ class TitleSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'name', 'year', 'rating', 'description', 'genre', 'category'
         )
-        read_only_fields = ('id',)
 
     def get_rating(self, obj):
         avg_score = Review.objects.filter(title=obj).aggregate(
             Avg('score'))['score__avg']
         return round(avg_score) if avg_score is not None else None
 
+
+class TitleCreateUpdateSerializer(serializers.ModelSerializer):
+    genre = serializers.SlugRelatedField(
+        many=True, queryset=Genre.objects.all(), slug_field='slug'
+    )
+    category = serializers.SlugRelatedField(
+        queryset=Category.objects.all(), slug_field='slug'
+    )
+
+    class Meta:
+        model = Title
+        fields = (
+            'id', 'name', 'year', 'description', 'genre', 'category'
+        )
+
     def validate_year(self, year):
-        if year > date.today().year:
+        current_year = date.today().year
+        if year > current_year:
             raise serializers.ValidationError(
-                'Год выпуска не может быть больше текущего.'
+                f'Год выпуска {year} больше текущего: {current_year}.'
             )
         return year
 

@@ -7,6 +7,7 @@ import django.core.validators
 from django.db import migrations, models
 import django.db.models.deletion
 import django.utils.timezone
+import reviews.models
 import uuid
 
 
@@ -87,11 +88,11 @@ class Migration(migrations.Migration):
             name='Title',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=256)),
-                ('year', models.IntegerField(validators=[django.core.validators.MaxValueValidator(2024)])),
-                ('description', models.TextField(blank=True)),
-                ('category', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='titles', to='reviews.category')),
-                ('genre', models.ManyToManyField(related_name='titles', through='reviews.GenreTitle', to='reviews.Genre')),
+                ('name', models.CharField(max_length=256, verbose_name='Название')),
+                ('year', models.IntegerField(validators=[django.core.validators.MaxValueValidator(reviews.models.current_year)], verbose_name='Год создания')),
+                ('description', models.TextField(blank=True, verbose_name='Описание')),
+                ('category', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='titles', to='reviews.category', verbose_name='Категория')),
+                ('genre', models.ManyToManyField(related_name='titles', through='reviews.GenreTitle', to='reviews.Genre', verbose_name='Жанр')),
             ],
             options={
                 'verbose_name': 'Произведение',
