@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 def forbidden_usernames(value: str) -> None:
     """Валидатор username."""
 
-    FORBIDDEN_USERNAMES = 'me'
+    FORBIDDEN_USERNAMES = ('me',)
 
     if value in FORBIDDEN_USERNAMES:
         raise ValidationError(

@@ -101,9 +101,6 @@ User = get_user_model()
 
 class UserSerializer(serializers.ModelSerializer):
     username = serializers.CharField(
-        max_length=USERNAME_MAX_LENGTH, required=True)
-
-    username = serializers.CharField(
         max_length=USERNAME_MAX_LENGTH, required=True,
         validators=[UniqueValidator(queryset=User.objects.all())])
 
