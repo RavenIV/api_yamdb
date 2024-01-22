@@ -149,9 +149,10 @@ class UserViewSet(ModelViewSet):
         detail=False,
         methods=['get', 'patch'],
         permission_classes=(permissions.IsAuthenticated,),
-        serializer_class=UserMeSerializer
+        serializer_class=UserMeSerializer,
+        url_path='me'
     )
-    def me(self, request, pk=None):
+    def user_info(self, request, pk=None):
         if request.method == 'PATCH':
             serializer = self.get_serializer(
                 request.user, data=request.data, partial=True)
