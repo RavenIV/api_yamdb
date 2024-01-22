@@ -113,7 +113,7 @@ class Title(models.Model):
     )
     genre = models.ManyToManyField(
         Genre,
-        through='GenreTitle',
+        # through='GenreTitle',
         verbose_name='Жанр'
     )
     rating = models.IntegerField('Рейтинг', blank=True, null=True)
@@ -209,6 +209,6 @@ class Comment(Post):
         )
 
 
-class GenreTitle(models.Model):
-    genre = models.ForeignKey(Genre, on_delete=models.SET_NULL, null=True)
-    title = models.ForeignKey(Title, on_delete=models.CASCADE)
+# class GenreTitle(models.Model):
+#     genre = models.ForeignKey(Genre, on_delete=models.SET_NULL, null=True)
+#     title = models.ForeignKey(Title, on_delete=models.CASCADE)

@@ -78,13 +78,6 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-            name='GenreTitle',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('genre', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='reviews.genre')),
-            ],
-        ),
-        migrations.CreateModel(
             name='Title',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
@@ -92,7 +85,7 @@ class Migration(migrations.Migration):
                 ('year', models.IntegerField(validators=[django.core.validators.MaxValueValidator(reviews.models.current_year)], verbose_name='Год создания')),
                 ('description', models.TextField(blank=True, verbose_name='Описание')),
                 ('category', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='titles', to='reviews.category', verbose_name='Категория')),
-                ('genre', models.ManyToManyField(related_name='titles', through='reviews.GenreTitle', to='reviews.Genre', verbose_name='Жанр')),
+                ('genre', models.ManyToManyField(related_name='titles', to='reviews.Genre', verbose_name='Жанр')),
             ],
             options={
                 'verbose_name': 'Произведение',
@@ -117,11 +110,6 @@ class Migration(migrations.Migration):
                 'ordering': ('pub_date',),
                 'default_related_name': 'review',
             },
-        ),
-        migrations.AddField(
-            model_name='genretitle',
-            name='title',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='reviews.title'),
         ),
         migrations.CreateModel(
             name='Comment',
