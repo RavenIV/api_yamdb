@@ -4,7 +4,6 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db.models import Q
 from rest_framework import serializers
-from rest_framework.validators import UniqueValidator
 
 from api_yamdb.constants import (
     USERNAME_MAX_LENGTH, EMAIL_MAX_LENGTH, MIN_RATING, MAX_RATING

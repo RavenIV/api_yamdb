@@ -8,7 +8,9 @@ from django.core.validators import (
 from django.db import models
 from django.db.models import Avg
 
-from api_yamdb.constants import Role, USERNAME_MAX_LENGTH, MIN_RATING, MAX_RATING
+from api_yamdb.constants import (
+    Role, USERNAME_MAX_LENGTH, MIN_RATING, MAX_RATING
+)
 from api_yamdb.validators import forbidden_usernames
 
 
@@ -101,7 +103,7 @@ class Title(models.Model):
     name = models.CharField('Название', max_length=256)
     year = models.IntegerField(
         'Год создания',
-        validators=[MaxValueValidator(current_year),]
+        validators=[MaxValueValidator(current_year), ]
     )
     description = models.TextField('Описание', blank=True)
     category = models.ForeignKey(
