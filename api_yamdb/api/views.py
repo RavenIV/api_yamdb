@@ -84,7 +84,6 @@ class ReviewViewSet(BaseContentViewSet):
 
 
 class CommentViewSet(BaseContentViewSet):
-
     serializer_class = CommentSerializer
 
     def get_review(self):
