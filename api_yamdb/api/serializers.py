@@ -5,10 +5,10 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db.models import Q
 from rest_framework import serializers
 
-from api_yamdb.constants import (
+from api_yamdb.validators import forbidden_usernames
+from reviews.constants import (
     USERNAME_MAX_LENGTH, EMAIL_MAX_LENGTH, MIN_RATING, MAX_RATING
 )
-from api_yamdb.validators import forbidden_usernames
 from reviews.models import Category, Genre, Title, Review, Comment
 
 
@@ -27,14 +27,15 @@ class GenreSerializer(serializers.ModelSerializer):
 
 
 class TitleReadSerializer(serializers.ModelSerializer):
-    genre = GenreSerializer(many=True)
-    category = CategorySerializer()
+    genre = GenreSerializer(many=True, read_only=True)
+    category = CategorySerializer(read_only=True)
 
     class Meta:
         model = Title
         fields = (
             'id', 'name', 'year', 'rating', 'description', 'genre', 'category'
         )
+        read_only_fields = ('name', 'year', 'rating', 'description')
 
 
 class TitleCreateUpdateSerializer(serializers.ModelSerializer):
@@ -171,5 +172,5 @@ class RegisterCodObtainSerializer(serializers.Serializer):
             )
 
     def validate_username(self, value):
-        if forbidden_usernames(value) is None:
-            return value
+        forbidden_usernames(value)
+        return value

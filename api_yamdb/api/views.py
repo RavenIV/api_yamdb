@@ -15,7 +15,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 from rest_framework_simplejwt import tokens
 
-from api_yamdb.constants import YAMDB_EMAIL
+from api_yamdb.settings import YAMDB_EMAIL
 from reviews.models import Category, Genre, Title, Review
 from .filters import TitleFilter
 from .permissions import (IsAdminOrReadOnly, IsAdmin,
@@ -27,25 +27,22 @@ from .serializers import (CategorySerializer, GenreSerializer,
                           RegisterCodObtainSerializer)
 
 
-class CreateListDestroyViewSet(CreateModelMixin,
-                               ListModelMixin,
-                               DestroyModelMixin,
-                               GenericViewSet):
-    """Вьюсет для получения списка, создания и удаления объектов."""
-
-
-class CategoryViewSet(CreateListDestroyViewSet):
-    """Вьюсет для получения списка, создания и удаления категорий."""
-    queryset = Category.objects.all()
-    serializer_class = CategorySerializer
+class BaseClassificationViewSet(CreateModelMixin,
+                                ListModelMixin,
+                                DestroyModelMixin,
+                                GenericViewSet):
     lookup_field = 'slug'
     permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
 
 
-class GenreViewSet(CategoryViewSet):
-    """Вьюсет для получения списка, создания и удаления жанров."""
+class CategoryViewSet(BaseClassificationViewSet):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+
+
+class GenreViewSet(BaseClassificationViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
 

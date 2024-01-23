@@ -8,10 +8,10 @@ from django.core.validators import (
 from django.db import models
 from django.db.models import Avg
 
-from api_yamdb.constants import (
+from api_yamdb.validators import forbidden_usernames
+from .constants import (
     Role, USERNAME_MAX_LENGTH, MIN_RATING, MAX_RATING
 )
-from api_yamdb.validators import forbidden_usernames
 
 
 class User(AbstractUser):
@@ -66,7 +66,7 @@ class User(AbstractUser):
         )
 
 
-class Base(models.Model):
+class Classification(models.Model):
     name = models.CharField('Название', max_length=256)
     slug = models.SlugField('Слаг', unique=True, max_length=50)
 
@@ -81,16 +81,16 @@ class Base(models.Model):
         )
 
 
-class Category(Base):
+class Category(Classification):
 
-    class Meta(Base.Meta):
+    class Meta(Classification.Meta):
         verbose_name = 'Категория'
         verbose_name_plural = 'Категории'
 
 
-class Genre(Base):
+class Genre(Classification):
 
-    class Meta(Base.Meta):
+    class Meta(Classification.Meta):
         verbose_name = 'Жанр'
         verbose_name_plural = 'Жанры'
 
