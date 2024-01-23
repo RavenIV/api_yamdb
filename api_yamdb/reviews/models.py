@@ -6,7 +6,6 @@ from django.core.validators import (
     MinValueValidator, MaxValueValidator, EmailValidator
 )
 from django.db import models
-from django.db.models import Avg
 
 from api_yamdb.validators import forbidden_usernames
 from .constants import (
@@ -114,12 +113,6 @@ class Title(models.Model):
         verbose_name='Категория'
     )
     genre = models.ManyToManyField(Genre, verbose_name='Жанр')
-    rating = models.IntegerField('Рейтинг', blank=True, null=True)
-
-    def update_rating(self):
-        avg_score = self.review.aggregate(Avg('score'))['score__avg']
-        self.rating = round(avg_score) if avg_score is not None else None
-        self.save()
 
     class Meta:
         verbose_name = 'Произведение'
@@ -175,15 +168,6 @@ class Review(Post):
                 fields=['author', 'title'], name='unique_review'
             )
         ]
-
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        self.title.update_rating()
-
-    def delete(self, *args, **kwargs):
-        title = self.title
-        super().delete(*args, **kwargs)
-        title.update_rating()
 
     def __str__(self):
         return (

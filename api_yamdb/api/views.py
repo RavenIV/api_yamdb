@@ -2,6 +2,7 @@ import uuid
 
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
+from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
@@ -49,7 +50,9 @@ class GenreViewSet(BaseClassificationViewSet):
 
 class TitleViewSet(ModelViewSet):
     """Вьюсет для произведений."""
-    queryset = Title.objects.all()
+    queryset = Title.objects.annotate(
+        rating=Avg('review__score')
+    ).order_by('name')
     filter_backends = (DjangoFilterBackend,)
     http_method_names = ['get', 'post', 'patch', 'delete']
     permission_classes = (IsAdminOrReadOnly,)

@@ -29,13 +29,14 @@ class GenreSerializer(serializers.ModelSerializer):
 class TitleReadSerializer(serializers.ModelSerializer):
     genre = GenreSerializer(many=True, read_only=True)
     category = CategorySerializer(read_only=True)
+    rating = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Title
         fields = (
             'id', 'name', 'year', 'rating', 'description', 'genre', 'category'
         )
-        read_only_fields = ('name', 'year', 'rating', 'description')
+        read_only_fields = ('name', 'year', 'description')
 
 
 class TitleCreateUpdateSerializer(serializers.ModelSerializer):
@@ -172,5 +173,5 @@ class RegisterCodObtainSerializer(serializers.Serializer):
             )
 
     def validate_username(self, value):
-        forbidden_usernames(value)
-        return value
+        if forbidden_usernames(value) is None:
+            return value
