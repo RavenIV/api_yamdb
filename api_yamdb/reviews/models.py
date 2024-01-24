@@ -7,10 +7,11 @@ from django.core.validators import (
 )
 from django.db import models
 
-from api_yamdb.validators import forbidden_usernames
 from .constants import (
-    Role, USERNAME_MAX_LENGTH, MIN_RATING, MAX_RATING
+    Role, USERNAME_MAX_LENGTH, MIN_RATING, MAX_RATING,
+    FIRST_NAME_MAX_LENGTH, LAST_NAME_MAX_LENGTH
 )
+from .validators import forbidden_usernames
 
 
 class User(AbstractUser):
@@ -30,6 +31,10 @@ class User(AbstractUser):
         unique=True, max_length=USERNAME_MAX_LENGTH,
         validators=[forbidden_usernames],
     )
+    first_name = models.CharField(
+        'Имя', blank=True, max_length=FIRST_NAME_MAX_LENGTH)
+    last_name = models.CharField(
+        'Фамилия', blank=True, max_length=LAST_NAME_MAX_LENGTH)
     bio = models.TextField('О себе', blank=True)
     role = models.CharField(
         'Тип пользователя',
@@ -42,7 +47,7 @@ class User(AbstractUser):
     class Meta:
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
-        ordering = ('id', 'date_joined')
+        ordering = ('username', 'date_joined')
 
     @property
     def is_moderator(self):

@@ -5,10 +5,10 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db.models import Q
 from rest_framework import serializers
 
-from api_yamdb.validators import forbidden_usernames
 from reviews.constants import (
     USERNAME_MAX_LENGTH, EMAIL_MAX_LENGTH, MIN_RATING, MAX_RATING
 )
+from reviews.validators import forbidden_usernames
 from reviews.models import Category, Genre, Title, Review, Comment
 
 
@@ -115,48 +115,31 @@ class UserSerializer(serializers.ModelSerializer):
         )
 
     def validate_username(self, value):
-        if forbidden_usernames(value) is None:
-            return value
+        forbidden_usernames(value)
+        return value
 
 
-class UserMeSerializer(UserSerializer):
+class UserInfoSerializer(UserSerializer):
 
     class Meta(UserSerializer.Meta):
         read_only_fields = ('role',)
 
 
-class RegisterCodObtainSerializer(serializers.Serializer):
-    """
-    Регистрация по username и email и получение confirmation_code на почту.
-    """
-
+class RegisterSerializer(serializers.Serializer):
     email = serializers.EmailField(
-        max_length=EMAIL_MAX_LENGTH, required=True, )
-
+        max_length=EMAIL_MAX_LENGTH, required=True)
     username = serializers.CharField(
-        max_length=USERNAME_MAX_LENGTH, required=True)
+        max_length=USERNAME_MAX_LENGTH, required=True,
+        validators=[forbidden_usernames])
 
     def create(self, validated_data):
         username = validated_data['username']
         email = validated_data['email']
-
         user_email_or_username_list = User.objects.filter(
             Q(username=username) | Q(email=email))
-
-        if not user_email_or_username_list:
-            return User.objects.create(
-                username=username, email=email)
-
-        user_email_username = user_email_or_username_list.filter(
-            username=username, email=email).first()
-
-        if user_email_username:
-            return user_email_username
-
-        user_username = user_email_or_username_list.filter(
+        user_email = user_email_or_username_list.exclude(
             username=username).first()
-        user_email = user_email_or_username_list.filter(email=email).first()
-
+        user_username = user_email_or_username_list.exclude(email=email).first()
         if user_username:
             if user_username and user_email:
                 raise serializers.ValidationError(
@@ -166,13 +149,17 @@ class RegisterCodObtainSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 {'username': [f'username {user_username} уже занят']},
                 code='duplicate_username')
-
         if user_email:
             raise serializers.ValidationError(
                 {'email': [f'email {user_email} уже занят']},
                 code='duplicate_email'
             )
+        user_email_username, created = user_email_or_username_list.get_or_create(
+                username=username, email=email)
+        return user_email_username
 
-    def validate_username(self, value):
-        if forbidden_usernames(value) is None:
-            return value
+
+class TokenObtainSerializer(serializers.Serializer):
+    username = serializers.CharField(
+        max_length=USERNAME_MAX_LENGTH, required=True, validators=[forbidden_usernames])
+    confirmation_code = serializers.CharField(required=True)
