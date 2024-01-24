@@ -15,7 +15,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 from rest_framework_simplejwt import tokens
 
-from api_yamdb.constants import YAMDB_EMAIL
+from api_yamdb.settings import YAMDB_EMAIL
 from reviews.models import Category, Genre, Title, Review
 from .filters import TitleFilter
 from .permissions import (IsAdminOrReadOnly, IsAdmin,
@@ -23,8 +23,8 @@ from .permissions import (IsAdminOrReadOnly, IsAdmin,
 from .serializers import (CategorySerializer, GenreSerializer,
                           TitleReadSerializer, TitleCreateUpdateSerializer,
                           ReviewSerializer, CommentSerializer,
-                          UserSerializer, UserMeSerializer,
-                          RegisterCodObtainSerializer)
+                          UserSerializer, UserInfoSerializer,
+                          RegisterSerializer, TokenObtainSerializer)
 
 
 class CreateListDestroyViewSet(CreateModelMixin,
@@ -113,7 +113,7 @@ class UserViewSet(ModelViewSet):
         detail=False,
         methods=['get', 'patch'],
         permission_classes=(permissions.IsAuthenticated,),
-        serializer_class=UserMeSerializer,
+        serializer_class=UserInfoSerializer,
         url_path='me'
     )
     def user_info(self, request, pk=None):
@@ -125,43 +125,30 @@ class UserViewSet(ModelViewSet):
         return Response(self.get_serializer(request.user).data)
 
 
-class RegisterCodObtainViewSet(ModelViewSet):
-    queryset = User.objects.all()
-    serializer_class = RegisterCodObtainSerializer
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        send_mail(
-            subject='YAmdb confirmation code',
-            message=str(uuid.uuid4),
-            from_email=YAMDB_EMAIL,
-            recipient_list=[request.data['email']]
-        )
-        return Response(serializer.data, status=status.HTTP_200_OK)
+@api_view(['POST'])
+def register_cod_obtain(request):
+    serializer = RegisterSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
+    send_mail(
+        subject='YAmdb confirmation code',
+        message=str(uuid.uuid4),
+        from_email=YAMDB_EMAIL,
+        recipient_list=[serializer.data['email']]
+    )
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
 def token_obtain(request):
-    if 'username' not in request.data:
-        return Response(status=status.HTTP_400_BAD_REQUEST)
-
-    username = request.data['username']
-    user = User.objects.filter(username=username).first()
-
-    if not user:
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
-    if str(user.confirmation_code) != request.data['confirmation_code']:
+    serializer = TokenObtainSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    username = serializer.data['username']
+    user = get_object_or_404(User, username=username)
+    if user.confirmation_code != serializer.data['confirmation_code']:
         raise ValidationError(
-            {'confirmation_code': f'Неверный код подтверждения '
-                                  f'{user.confirmation_code} != '
-                                  f'{request.data["confirmation_code"]}'},
+            {'confirmation_code': f'Неверный код подтверждения '},
             code='invalid_confirmation_code',
         )
-
-    user.last_login = timezone.now()
-    user.save()
     return Response({
         'token': str(tokens.RefreshToken.for_user(user).access_token)})
