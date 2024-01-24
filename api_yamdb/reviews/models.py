@@ -162,7 +162,7 @@ class Review(Post):
     class Meta(Post.Meta):
         verbose_name = 'Отзыв'
         verbose_name_plural = 'Отзывы'
-        default_related_name = 'review'
+        default_related_name = 'reviews'
         constraints = [
             models.UniqueConstraint(
                 fields=['author', 'title'], name='unique_review'
@@ -184,7 +184,7 @@ class Comment(Post):
     class Meta(Post.Meta):
         verbose_name = 'Комментарий'
         verbose_name_plural = 'Комментарии'
-        default_related_name = 'comment'
+        default_related_name = 'comments'
 
     def __str__(self):
         return (
