@@ -2,6 +2,7 @@ import uuid
 
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
+from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
@@ -15,7 +16,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 from rest_framework_simplejwt import tokens
 
-from api_yamdb.constants import YAMDB_EMAIL
+from api_yamdb.settings import YAMDB_EMAIL
 from reviews.models import Category, Genre, Title, Review
 from .filters import TitleFilter
 from .permissions import (IsAdminOrReadOnly, IsAdmin,
@@ -27,32 +28,30 @@ from .serializers import (CategorySerializer, GenreSerializer,
                           RegisterCodObtainSerializer)
 
 
-class CreateListDestroyViewSet(CreateModelMixin,
-                               ListModelMixin,
-                               DestroyModelMixin,
-                               GenericViewSet):
-    """Вьюсет для получения списка, создания и удаления объектов."""
-
-
-class CategoryViewSet(CreateListDestroyViewSet):
-    """Вьюсет для получения списка, создания и удаления категорий."""
-    queryset = Category.objects.all()
-    serializer_class = CategorySerializer
+class BaseClassificationViewSet(CreateModelMixin,
+                                ListModelMixin,
+                                DestroyModelMixin,
+                                GenericViewSet):
     lookup_field = 'slug'
     permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
 
 
-class GenreViewSet(CategoryViewSet):
-    """Вьюсет для получения списка, создания и удаления жанров."""
+class CategoryViewSet(BaseClassificationViewSet):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+
+
+class GenreViewSet(BaseClassificationViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
 
 
 class TitleViewSet(ModelViewSet):
-    """Вьюсет для произведений."""
-    queryset = Title.objects.all()
+    queryset = Title.objects.annotate(
+        rating=Avg('review__score')
+    ).order_by('name')
     filter_backends = (DjangoFilterBackend,)
     http_method_names = ['get', 'post', 'patch', 'delete']
     permission_classes = (IsAdminOrReadOnly,)
@@ -61,8 +60,7 @@ class TitleViewSet(ModelViewSet):
     def get_serializer_class(self):
         if self.action in ['list', 'retrieve']:
             return TitleReadSerializer
-        if self.action in ['create', 'partial_update']:
-            return TitleCreateUpdateSerializer
+        return TitleCreateUpdateSerializer
 
 
 class BaseContentViewSet(ModelViewSet):
