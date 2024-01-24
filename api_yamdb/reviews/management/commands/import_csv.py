@@ -65,7 +65,6 @@ def populate_table(reader, table, fields):
 class Command(BaseCommand):
     help = 'Имортировать CSV-файлы из папки ./static/data/ в базу данных.'
 
-
     def handle(self, *args, **options):
         for file, name, is_table, fields in FILE_MODEL_TABLE_FIELDS:
             path = './static/data/{}'.format(file)
