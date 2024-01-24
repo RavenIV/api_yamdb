@@ -123,13 +123,15 @@ class UserViewSet(ModelViewSet):
 
 
 @api_view(['POST'])
-def register_cod_obtain(request):
+def register_code_obtain(request):
     serializer = RegisterSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     serializer.save()
+    username = serializer.data['username']
+    user = get_object_or_404(User, username=username)
     send_mail(
         subject='YAmdb confirmation code',
-        message=str(uuid.uuid4),
+        message=str(user.confirmation_code),
         from_email=YAMDB_EMAIL,
         recipient_list=[serializer.data['email']]
     )
@@ -144,7 +146,7 @@ def token_obtain(request):
     user = get_object_or_404(User, username=username)
     if user.confirmation_code != serializer.data['confirmation_code']:
         raise ValidationError(
-            {'confirmation_code': 'Неверный код подтверждения'},
+            {'confirmation_code': f'Неверный код подтверждения'},
             code='invalid_confirmation_code',
         )
     return Response({

@@ -9,7 +9,8 @@ def forbidden_usernames(value: str) -> None:
     if value in FORBIDDEN_USERNAMES:
         raise ValidationError(
             f'Нельзя использовать {value} как username')
-    forbidden_symbols = ''.join(set(re.sub(r'[\w.@+-]+', '', value)))
+    forbidden_symbols = re.sub(r'[\w.@+-]+', '', value)
     if forbidden_symbols:
         raise ValidationError(
-            f'Нельзя использовать {forbidden_symbols} в username')
+            f'Нельзя использовать {"".join(set(forbidden_symbols))} в username')
+    return value

@@ -9,7 +9,8 @@ from django.db import models
 
 from .constants import (
     Role, USERNAME_MAX_LENGTH, MIN_RATING, MAX_RATING,
-    FIRST_NAME_MAX_LENGTH, LAST_NAME_MAX_LENGTH
+    FIRST_NAME_MAX_LENGTH, LAST_NAME_MAX_LENGTH,
+    CODE_MAX_LENGTH
 )
 from .validators import forbidden_usernames
 
@@ -41,13 +42,13 @@ class User(AbstractUser):
         max_length=max(len(role[0]) for role in Role.choices),
         choices=Role.choices, default=Role.USER
     )
-    confirmation_code = models.UUIDField(
-        primary_key=False, default=uuid.uuid4, editable=True)
+    confirmation_code = models.UUIDField( 
+        primary_key=False, default=uuid.uuid4, editable=True) 
 
     class Meta:
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
-        ordering = ('username', 'date_joined')
+        ordering = ('username',)
 
     @property
     def is_moderator(self):
