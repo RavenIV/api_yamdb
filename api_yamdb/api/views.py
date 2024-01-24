@@ -49,7 +49,6 @@ class GenreViewSet(BaseClassificationViewSet):
 
 
 class TitleViewSet(ModelViewSet):
-    """Вьюсет для произведений."""
     queryset = Title.objects.annotate(
         rating=Avg('review__score')
     ).order_by('name')
@@ -61,8 +60,7 @@ class TitleViewSet(ModelViewSet):
     def get_serializer_class(self):
         if self.action in ['list', 'retrieve']:
             return TitleReadSerializer
-        if self.action in ['create', 'partial_update']:
-            return TitleCreateUpdateSerializer
+        return TitleCreateUpdateSerializer
 
 
 class BaseContentViewSet(ModelViewSet):
