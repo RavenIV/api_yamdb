@@ -4,7 +4,6 @@ from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
-from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, permissions
 from rest_framework.decorators import action, api_view
@@ -145,7 +144,7 @@ def token_obtain(request):
     user = get_object_or_404(User, username=username)
     if user.confirmation_code != serializer.data['confirmation_code']:
         raise ValidationError(
-            {'confirmation_code': f'Неверный код подтверждения '},
+            {'confirmation_code': 'Неверный код подтверждения'},
             code='invalid_confirmation_code',
         )
     return Response({

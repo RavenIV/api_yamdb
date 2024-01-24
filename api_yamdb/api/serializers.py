@@ -8,8 +8,8 @@ from rest_framework import serializers
 from reviews.constants import (
     USERNAME_MAX_LENGTH, EMAIL_MAX_LENGTH, MIN_RATING, MAX_RATING
 )
-from reviews.validators import forbidden_usernames
 from reviews.models import Category, Genre, Title, Review, Comment
+from reviews.validators import forbidden_usernames
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -139,7 +139,9 @@ class RegisterSerializer(serializers.Serializer):
             Q(username=username) | Q(email=email))
         user_email = user_email_or_username_list.exclude(
             username=username).first()
-        user_username = user_email_or_username_list.exclude(email=email).first()
+        user_username = user_email_or_username_list.exclude(
+            email=email
+        ).first()
         if user_username:
             if user_username and user_email:
                 raise serializers.ValidationError(
@@ -154,12 +156,18 @@ class RegisterSerializer(serializers.Serializer):
                 {'email': [f'email {user_email} уже занят']},
                 code='duplicate_email'
             )
-        user_email_username, created = user_email_or_username_list.get_or_create(
-                username=username, email=email)
+        user_email_username, created = (
+            user_email_or_username_list.get_or_create(
+                username=username, email=email
+            )
+        )
         return user_email_username
 
 
 class TokenObtainSerializer(serializers.Serializer):
     username = serializers.CharField(
-        max_length=USERNAME_MAX_LENGTH, required=True, validators=[forbidden_usernames])
+        max_length=USERNAME_MAX_LENGTH,
+        required=True,
+        validators=[forbidden_usernames]
+    )
     confirmation_code = serializers.CharField(required=True)
