@@ -27,14 +27,16 @@ class GenreSerializer(serializers.ModelSerializer):
 
 
 class TitleReadSerializer(serializers.ModelSerializer):
-    genre = GenreSerializer(many=True)
-    category = CategorySerializer()
+    genre = GenreSerializer(many=True, read_only=True)
+    category = CategorySerializer(read_only=True)
+    rating = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Title
         fields = (
             'id', 'name', 'year', 'rating', 'description', 'genre', 'category'
         )
+        read_only_fields = ('name', 'year', 'description')
 
 
 class TitleCreateUpdateSerializer(serializers.ModelSerializer):
@@ -77,15 +79,16 @@ class ReviewSerializer(serializers.ModelSerializer):
         model = Review
         fields = ('id', 'text', 'author', 'score', 'pub_date')
 
-    def create(self, validated_data):
-        author = validated_data.get('author')
-        title = validated_data.get('title')
-        if (author.is_authenticated
-                and Review.objects.filter(author=author,
-                                          title=title).exists()):
-            raise serializers.ValidationError('Отзыв от данного автора на это '
-                                              'произведение уже существует')
-        return super().create(validated_data)
+    def validate(self, attrs):
+        author = self.context['request'].user
+        title_id = self.context['view'].kwargs.get('title_id')
+        if self.instance is None:
+            if Review.objects.filter(author=author,
+                                     title__id=title_id).exists():
+                raise serializers.ValidationError('Отзыв от данного автора на '
+                                                  'это произведение уже '
+                                                  'существует')
+        return attrs
 
 
 class CommentSerializer(serializers.ModelSerializer):

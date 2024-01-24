@@ -6,7 +6,6 @@ from django.core.validators import (
     MinValueValidator, MaxValueValidator, EmailValidator
 )
 from django.db import models
-from django.db.models import Avg
 
 from .constants import (
     Role, USERNAME_MAX_LENGTH, MIN_RATING, MAX_RATING,
@@ -71,7 +70,7 @@ class User(AbstractUser):
         )
 
 
-class Base(models.Model):
+class Classification(models.Model):
     name = models.CharField('Название', max_length=256)
     slug = models.SlugField('Слаг', unique=True, max_length=50)
 
@@ -86,16 +85,16 @@ class Base(models.Model):
         )
 
 
-class Category(Base):
+class Category(Classification):
 
-    class Meta(Base.Meta):
+    class Meta(Classification.Meta):
         verbose_name = 'Категория'
         verbose_name_plural = 'Категории'
 
 
-class Genre(Base):
+class Genre(Classification):
 
-    class Meta(Base.Meta):
+    class Meta(Classification.Meta):
         verbose_name = 'Жанр'
         verbose_name_plural = 'Жанры'
 
@@ -119,12 +118,6 @@ class Title(models.Model):
         verbose_name='Категория'
     )
     genre = models.ManyToManyField(Genre, verbose_name='Жанр')
-    rating = models.IntegerField('Рейтинг', blank=True, null=True)
-
-    def update_rating(self):
-        avg_score = self.review.aggregate(Avg('score'))['score__avg']
-        self.rating = round(avg_score) if avg_score is not None else None
-        self.save()
 
     class Meta:
         verbose_name = 'Произведение'
@@ -174,21 +167,12 @@ class Review(Post):
     class Meta(Post.Meta):
         verbose_name = 'Отзыв'
         verbose_name_plural = 'Отзывы'
-        default_related_name = 'review'
+        default_related_name = 'reviews'
         constraints = [
             models.UniqueConstraint(
                 fields=['author', 'title'], name='unique_review'
             )
         ]
-
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        self.title.update_rating()
-
-    def delete(self, *args, **kwargs):
-        title = self.title
-        super().delete(*args, **kwargs)
-        title.update_rating()
 
     def __str__(self):
         return (
@@ -205,7 +189,7 @@ class Comment(Post):
     class Meta(Post.Meta):
         verbose_name = 'Комментарий'
         verbose_name_plural = 'Комментарии'
-        default_related_name = 'comment'
+        default_related_name = 'comments'
 
     def __str__(self):
         return (
