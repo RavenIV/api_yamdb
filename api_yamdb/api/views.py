@@ -146,7 +146,7 @@ def token_obtain(request):
     user = get_object_or_404(User, username=username)
     if user.confirmation_code != serializer.data['confirmation_code']:
         raise ValidationError(
-            {'confirmation_code': f'Неверный код подтверждения'},
+            {'confirmation_code': 'Неверный код подтверждения'},
             code='invalid_confirmation_code',
         )
     return Response({
