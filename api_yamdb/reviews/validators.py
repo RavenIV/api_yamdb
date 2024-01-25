@@ -12,5 +12,7 @@ def forbidden_usernames(value: str):
     forbidden_symbols = re.sub(r'[\w.@+-]+', '', value)
     if forbidden_symbols:
         raise ValidationError(
-            f'Нельзя использовать {"".join(set(forbidden_symbols))} в username')
+            f'Нельзя использовать {"".join(set(forbidden_symbols))} '
+            f'в username'
+        )
     return value
