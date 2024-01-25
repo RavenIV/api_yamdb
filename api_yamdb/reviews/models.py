@@ -41,13 +41,13 @@ class User(AbstractUser):
         max_length=max(len(role[0]) for role in Role.choices),
         choices=Role.choices, default=Role.USER
     )
-    confirmation_code = models.UUIDField(
-        primary_key=False, default=uuid.uuid4, editable=True)
+    confirmation_code = models.UUIDField( 
+        primary_key=False, default=uuid.uuid4, editable=True) 
 
     class Meta:
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
-        ordering = ('username', 'date_joined')
+        ordering = ('username',)
 
     @property
     def is_moderator(self):

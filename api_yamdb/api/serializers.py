@@ -1,9 +1,12 @@
 from datetime import date
+import uuid
 
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db.models import Q
 from rest_framework import serializers
+from django.db import IntegrityError
+
 
 from reviews.constants import (
     USERNAME_MAX_LENGTH, EMAIL_MAX_LENGTH, MIN_RATING, MAX_RATING
@@ -115,8 +118,7 @@ class UserSerializer(serializers.ModelSerializer):
         )
 
     def validate_username(self, value):
-        forbidden_usernames(value)
-        return value
+        return forbidden_usernames(value)
 
 
 class UserInfoSerializer(UserSerializer):
@@ -129,45 +131,38 @@ class RegisterSerializer(serializers.Serializer):
     email = serializers.EmailField(
         max_length=EMAIL_MAX_LENGTH, required=True)
     username = serializers.CharField(
-        max_length=USERNAME_MAX_LENGTH, required=True,
-        validators=[forbidden_usernames])
+        max_length=USERNAME_MAX_LENGTH, required=True)
 
     def create(self, validated_data):
         username = validated_data['username']
         email = validated_data['email']
-        user_email_or_username_list = User.objects.filter(
-            Q(username=username) | Q(email=email))
-        user_email = user_email_or_username_list.exclude(
-            username=username).first()
-        user_username = user_email_or_username_list.exclude(
-            email=email
-        ).first()
-        if user_username:
-            if user_username and user_email:
+        try:
+            user, created = User.objects.get_or_create(
+                username=username, email=email)
+            user.confirmation_code = uuid.uuid4()
+            user.save()
+            return user
+        except IntegrityError:
+            if User.objects.filter(username=username).exists():
                 raise serializers.ValidationError(
-                    {'username': [f'username {user_username} уже занят'],
-                     'email': [f'email {user_email} уже занят']},
-                    code='duplicate_username_email')
-            raise serializers.ValidationError(
-                {'username': [f'username {user_username} уже занят']},
-                code='duplicate_username')
-        if user_email:
-            raise serializers.ValidationError(
-                {'email': [f'email {user_email} уже занят']},
-                code='duplicate_email'
-            )
-        user_email_username, created = (
-            user_email_or_username_list.get_or_create(
-                username=username, email=email
-            )
-        )
-        return user_email_username
+                    {'username': [f'username {username} уже занят']},
+                    code='duplicate_username')
+            if User.objects.filter(email=email).exists():
+                raise serializers.ValidationError(
+                    {'email': [f'email {email} уже занят']},
+                    code='duplicate_email'
+                )
+    
+    def validate_username(self, value):
+        return forbidden_usernames(value)
 
 
 class TokenObtainSerializer(serializers.Serializer):
     username = serializers.CharField(
         max_length=USERNAME_MAX_LENGTH,
-        required=True,
-        validators=[forbidden_usernames]
+        required=True
     )
     confirmation_code = serializers.CharField(required=True)
+
+    def validate_username(self, value):
+        return forbidden_usernames(value)
