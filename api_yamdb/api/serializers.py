@@ -5,7 +5,6 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import IntegrityError
 from rest_framework import serializers
 
-
 from reviews.constants import (
     USERNAME_MAX_LENGTH, EMAIL_MAX_LENGTH, MIN_RATING, MAX_RATING
 )
@@ -86,9 +85,10 @@ class ReviewSerializer(serializers.ModelSerializer):
         if self.instance is None:
             if Review.objects.filter(author=author,
                                      title__id=title_id).exists():
-                raise serializers.ValidationError('Отзыв от данного автора на '
-                                                  'это произведение уже '
-                                                  'существует')
+                raise serializers.ValidationError(
+                    'Отзыв от данного автора на это произведение '
+                    'уже существует'
+                )
         return attrs
 
 
