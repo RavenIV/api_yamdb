@@ -144,12 +144,16 @@ def token_obtain(request):
     serializer.is_valid(raise_exception=True)
     username = serializer.data['username']
     user = get_object_or_404(User, username=username)
-    if user.confirmation_code != serializer.data['confirmation_code']:
-        user.confirmation_code = str(uuid.uuid4())
-        user.save()
-        raise ValidationError(
-            {'confirmation_code': 'Неверный код подтверждения'},
-            code='invalid_confirmation_code',
+    check_code = bool(
+        user.confirmation_code == serializer.data['confirmation_code']
+    )
+    user.confirmation_code = str(uuid.uuid4())
+    user.save()
+    if check_code:
+        return Response(
+            {'token': str(tokens.RefreshToken.for_user(user).access_token)}
         )
-    return Response({
-        'token': str(tokens.RefreshToken.for_user(user).access_token)})
+    raise ValidationError(
+        {'confirmation_code': 'Неверный код подтверждения'},
+        code='invalid_confirmation_code',
+    )
