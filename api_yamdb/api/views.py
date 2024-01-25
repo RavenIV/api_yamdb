@@ -1,3 +1,5 @@
+import uuid
+
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.db.models import Avg
@@ -127,6 +129,8 @@ def register_code_obtain(request):
     serializer.save()
     username = serializer.data['username']
     user = get_object_or_404(User, username=username)
+    user.confirmation_code = uuid.uuid4()
+    user.save()
     send_mail(
         subject='YAmdb confirmation code',
         message=str(user.confirmation_code),

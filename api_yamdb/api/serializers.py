@@ -1,5 +1,4 @@
 from datetime import date
-import uuid
 
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -139,8 +138,6 @@ class RegisterSerializer(serializers.Serializer):
         try:
             user, created = User.objects.get_or_create(
                 username=username, email=email)
-            user.confirmation_code = uuid.uuid4()
-            user.save()
             return user
         except IntegrityError:
             if User.objects.filter(username=username).exists():
