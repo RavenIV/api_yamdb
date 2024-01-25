@@ -2,9 +2,8 @@ from datetime import date
 
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator, MaxValueValidator
-from django.db.models import Q
-from rest_framework import serializers
 from django.db import IntegrityError
+from rest_framework import serializers
 
 
 from reviews.constants import (
@@ -149,7 +148,7 @@ class RegisterSerializer(serializers.Serializer):
                     {'email': [f'email {email} уже занят']},
                     code='duplicate_email'
                 )
-    
+
     def validate_username(self, value):
         return forbidden_usernames(value)
 
