@@ -88,6 +88,6 @@ python3 manage.py runserver
 
 ## Разработчики
 
-* Ирина Воронцова (https://github.com/RavenIV)
-* Сергей Запорожан (https://github.com/Zixers)
-* Лада Колотова (https://github.com/lada-nk)
+* Ирина Воронцова [GitHub](https://github.com/RavenIV)
+* Сергей Запорожан [GitHub](https://github.com/Zixers)
+* Лада Колотова [GitHub](https://github.com/lada-nk)
